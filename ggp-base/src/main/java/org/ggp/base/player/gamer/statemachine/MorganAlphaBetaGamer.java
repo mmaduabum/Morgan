@@ -18,7 +18,7 @@ import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 
-/* This is the Morgan Freecow Legal Gamer
+/* This is the Morgan Freecow Alpha Beta Gamer
  *
  */
 public class MorganAlphaBetaGamer extends StateMachineGamer {
