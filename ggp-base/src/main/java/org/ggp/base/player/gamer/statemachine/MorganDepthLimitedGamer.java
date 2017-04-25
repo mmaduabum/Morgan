@@ -35,6 +35,22 @@ public class MorganDepthLimitedGamer extends StateMachineGamer {
 	}
 
 
+	private int mobilityHeuristic(Role role, MachineState state) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+		StateMachine machine = getStateMachine();
+		List<Move> moves = machine.getLegalMoves(state, getRole());
+		List<Move> feasibles = getStateMachine().findActions(getRole());
+		Double res = ((moves.size()/feasibles.size()) * 100.0);
+		return res.intValue();
+	}
+
+	private int focusHeuristic(Role role, MachineState state) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+		StateMachine machine = getStateMachine();
+		List<Move> moves = machine.getLegalMoves(state, getRole());
+		List<Move> feasibles = getStateMachine().findActions(getRole());
+		Double res = ((100 - moves.size()/feasibles.size()) * 100.0);
+		return res.intValue();
+	}
+
 
 
 	@Override
@@ -49,7 +65,7 @@ public class MorganDepthLimitedGamer extends StateMachineGamer {
 			return machine.findReward(getRole(), state);
 		}
 		if (level > globalLimit) {
-			return 0;
+			return mobilityHeuristic(getRole(), state);
 		}
 		List<Move> moves = machine.getLegalMoves(state, getRole());
 //		List<Move> moves = getStateMachine().findActions(getRole());
@@ -105,7 +121,7 @@ public class MorganDepthLimitedGamer extends StateMachineGamer {
 			return machine.findReward(getRole(), state);
 		}
 		if (level > globalLimit) {
-			return 0;
+			return focusHeuristic(getRole(), state);
 		}
 		List<Move> moves = machine.getLegalMoves(state, getRole());
 		int score = 0;
@@ -209,7 +225,7 @@ public class MorganDepthLimitedGamer extends StateMachineGamer {
 	private Role role;
 	private MachineState currentState;
 	private StateMachine stateMachine;
-	private int globalLimit = 1;
+	private int globalLimit = 3;
 
 
 }
