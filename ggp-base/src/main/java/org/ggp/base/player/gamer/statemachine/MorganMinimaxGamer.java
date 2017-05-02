@@ -21,7 +21,7 @@ import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 /* This is the Morgan Freecow Alpha Beta Gamer
  *
  */
-public class MorganAlphaBetaGamer extends StateMachineGamer {
+public class MorganMinimaxGamer extends StateMachineGamer {
 
 
 	@Override
@@ -60,8 +60,6 @@ public class MorganAlphaBetaGamer extends StateMachineGamer {
 
 	private int minScore(Move move, MachineState state) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		StateMachine machine = getStateMachine();
-
-
 		List<Role> opponents = new ArrayList<Role>(machine.getRoles());
 		opponents.remove(getRole());
 		List<Move> moves = machine.getLegalMoves(state, opponents.get(0));

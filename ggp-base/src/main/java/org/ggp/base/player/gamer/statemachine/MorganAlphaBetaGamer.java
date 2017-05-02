@@ -21,7 +21,7 @@ import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 /* This is the Morgan Freecow Legal Gamer
  *
  */
-public class MorganMinimaxGamer extends StateMachineGamer {
+public class MorganAlphaBetaGamer extends StateMachineGamer {
 
 
 	@Override
@@ -74,7 +74,7 @@ public class MorganMinimaxGamer extends StateMachineGamer {
 
 			MachineState newState = machine.getNextState(state, moveset);
 
-			int max_val = maxScore(state, alpha, beta);
+			int max_val = maxScore(newState, alpha, beta);
 			beta = Math.min(beta, max_val);
 			if (beta <= alpha) {
 				return alpha;

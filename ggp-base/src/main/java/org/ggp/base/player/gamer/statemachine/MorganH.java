@@ -164,7 +164,7 @@ public class MorganH extends StateMachineGamer {
 
 			MachineState newState = machine.getNextState(state, moveset);
 
-			int max_val = maxScore(state, alpha, beta, level+1);
+			int max_val = maxScore(newState, alpha, beta, level+1);
 			beta = Math.min(beta, max_val);
 			if (beta <= alpha) {
 				return alpha;
