@@ -18,10 +18,10 @@ import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 
-/* This is the Morgan Freecow Legal Gamer
+/* This is the Morgan Freecow Alpha Beta Gamer
  *
  */
-public class MorganMinimaxGamer extends StateMachineGamer {
+public class MorganAlphaBetaGamer extends StateMachineGamer {
 
 
 	@Override
@@ -41,31 +41,31 @@ public class MorganMinimaxGamer extends StateMachineGamer {
 	public void stateMachineMetaGame(long timeout) {
 	}
 
-
-
-	private int maxScore(MachineState state, int alpha, int beta) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+	private int maxScore(MachineState state) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		StateMachine machine = getStateMachine();
 		if (machine.findTerminalp(state)) {
 			return machine.findReward(getRole(), state);
 		}
 		List<Move> moves = machine.getLegalMoves(state, getRole());
+		int score = 0;
 		for (int i = 0; i < moves.size(); i++) {
-			int result = minScore(moves.get(i), state, alpha, beta);
-			alpha = Math.max(alpha, result);
-			if (alpha >= beta) {
-				return beta;
+			Move move = moves.get(i);
+			int result = minScore(move, state);
+			if (result > score) {
+				score = result;
 			}
-
 		}
-		return alpha;
+		return score;
 	}
 
-
-	private int minScore(Move move, MachineState state, int alpha, int beta) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+	private int minScore(Move move, MachineState state) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		StateMachine machine = getStateMachine();
+
+
 		List<Role> opponents = new ArrayList<Role>(machine.getRoles());
 		opponents.remove(getRole());
 		List<Move> moves = machine.getLegalMoves(state, opponents.get(0));
+		int score = 100;
 		for (int i = 0; i < moves.size(); i++) {
 			Move opponent_move = moves.get(i);
 			ArrayList<Move> moveset = new ArrayList<Move>();
@@ -73,14 +73,13 @@ public class MorganMinimaxGamer extends StateMachineGamer {
 			moveset.add(opponent_move);
 
 			MachineState newState = machine.getNextState(state, moveset);
-
-			int max_val = maxScore(state, alpha, beta);
-			beta = Math.min(beta, max_val);
-			if (beta <= alpha) {
-				return alpha;
+			int result = maxScore(newState);
+			if (result < score) {
+				score = result;
 			}
+
 		}
-		return beta;
+		return score;
 	}
 
 	private Move bestMove(MachineState state) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
@@ -90,13 +89,10 @@ public class MorganMinimaxGamer extends StateMachineGamer {
 		System.out.println(moves.toString());
 		int score = 0;
 		Move move = moves.get(0);
-		int alpha = 0;
-		int beta = 100;
-
 		for (int i=0; i < moves.size(); i++) {
 			Move currentMove = moves.get(i);
 
-			int result = minScore(currentMove, state, alpha, beta);
+			int result = minScore(currentMove, state);
 			System.out.println(result);
 			if (result >= score) {
 				score = result;
@@ -140,7 +136,7 @@ public class MorganMinimaxGamer extends StateMachineGamer {
 	@Override
 	public String getName() {
 		// TODO Auto-generated method stub
-		return "Morgan Minimax";
+		return "Morgan Alpha Beta";
 	}
 	private Role role;
 	private MachineState currentState;
