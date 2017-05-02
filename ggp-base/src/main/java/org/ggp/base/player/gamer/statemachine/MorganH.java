@@ -2,6 +2,7 @@ package org.ggp.base.player.gamer.statemachine;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.ggp.base.apps.player.detail.DetailPanel;
 import org.ggp.base.apps.player.detail.SimpleDetailPanel;
@@ -63,11 +64,16 @@ public class MorganH extends StateMachineGamer {
 		}
 		return 0;
 	}
+	private int goalProximityHeuristic(Role role, MachineState state) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+
+		StateMachine machine = getStateMachine();
+		return machine.getGoal(state, getRole());
+	}
 
 	private int evalfun(Role role, MachineState state) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		int mh = mobilityHeuristic(role, state);
 		int ofh = oppFocusHeuristic(role, state);
-		Double res = (mobility_weight * mh) + (focus_weight * ofh);
+		Double res = (mobility_weight * mh);
 		return res.intValue();
 	}
 
@@ -130,6 +136,37 @@ public class MorganH extends StateMachineGamer {
 
 	}
 
+	private double depthCharge(MachineState state)
+			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+		StateMachine machine = getStateMachine();
+		if (machine.findTerminalp(state)) {
+			return machine.findReward(getRole(), state);
+		}
+		List<Role> roles = new ArrayList<Role>(machine.getRoles());
+		int numRoles = roles.size();
+
+		ArrayList<Move> moveSet = new ArrayList<Move>(numRoles);
+		for (int i = 0; i < numRoles; i++) {
+			List<Move> moves = machine.getLegalMoves(state, roles.get(i));
+			Random rand = new Random();
+			int n = rand.nextInt(moves.size());
+			Move best = moves.get(n);
+			moveSet.add(best);
+		}
+		MachineState newState = machine.getNextState(state, moveSet);
+		return depthCharge(newState);
+
+	}
+
+	private int monteCarlo(MachineState state)
+			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+		double total = 0;
+		for (int i=0; i < monteCarloCount; i++) {
+			total = total + depthCharge(state);
+		}
+		return (int)total/monteCarloCount;
+	}
+
 
 	private int maxScore(MachineState state, int alpha, int beta, int level) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		StateMachine machine = getStateMachine();
@@ -137,7 +174,10 @@ public class MorganH extends StateMachineGamer {
 			return machine.findReward(getRole(), state);
 		}
 		if (level > globalLimit) {
-			return evalfun(getRole(), state);
+//			return evalfun(getRole(), state);
+			System.out.println("goal is" + machine.getGoal(state, getRole()));
+			Double res = 1.0 * machine.getGoal(state, getRole());
+			return res.intValue();
 		}
 		List<Move> moves = machine.getLegalMoves(state, getRole());
 		for (int i = 0; i < moves.size(); i++) {
@@ -239,6 +279,7 @@ public class MorganH extends StateMachineGamer {
 	private MachineState currentState;
 	private StateMachine stateMachine;
 	private int globalLimit = 5;
+	private int monteCarloCount = 4;
 	private Double mobility_weight = 0.7;
 	private Double focus_weight = 0.3;
 
