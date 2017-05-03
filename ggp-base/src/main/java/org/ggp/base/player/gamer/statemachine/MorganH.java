@@ -65,15 +65,16 @@ public class MorganH extends StateMachineGamer {
 		return 0;
 	}
 	private int goalProximityHeuristic(Role role, MachineState state) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
-
 		StateMachine machine = getStateMachine();
 		return machine.getGoal(state, getRole());
 	}
 
-	private int evalfun(Role role, MachineState state) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
-		int mh = mobilityHeuristic(role, state);
-		int ofh = oppFocusHeuristic(role, state);
-		Double res = (mobility_weight * mh);
+	private int evalfn(Role role, MachineState state) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+		//int mh = mobilityHeuristic(role, state);
+		//int ofh = oppFocusHeuristic(role, state);
+		int mc = monteCarlo(state);
+		int gl = goalProximityHeuristic(role, state);
+		Double res = gl * goal_weight + mc * monteCarlo_weight;
 		return res.intValue();
 	}
 
@@ -112,7 +113,7 @@ public class MorganH extends StateMachineGamer {
 		StateMachine machine = getStateMachine();
 		List<Move> moves = machine.getLegalMoves(state, getRole());
 //		List<Move> moves = getStateMachine().findActions(getRole());
-		System.out.println(moves.toString());
+		//System.out.println(moves.toString());
 		int score = 0;
 		Move move = moves.get(0);
 		for (int i=0; i < moves.size(); i++) {
@@ -125,7 +126,7 @@ public class MorganH extends StateMachineGamer {
 
 			MachineState newState = machine.getNextState(state, new_moves);
 			int result = maxSPScore(newState, 0);
-			System.out.println(result);
+			//System.out.println(result);
 			if (result >= 100) return moves.get(i);
 			if (result >= score) {
 				score = result;
@@ -177,9 +178,10 @@ public class MorganH extends StateMachineGamer {
 //			return evalfun(getRole(), state);
 			//System.out.println("goal is" + machine.getGoal(state, getRole()));
 			//Double res = 1.0 * machine.getGoal(state, getRole());
-			Double res = 1.0 * monteCarlo(state);
-			System.out.println("res: " + res);
-			return res.intValue();
+			//Double res = 1.0 * monteCarlo(state);
+			//System.out.println("res: " + res);
+			return evalfn(getRole(), state);
+			//return res.intValue();
 		}
 		List<Move> moves = machine.getLegalMoves(state, getRole());
 		for (int i = 0; i < moves.size(); i++) {
@@ -219,20 +221,20 @@ public class MorganH extends StateMachineGamer {
 		StateMachine machine = getStateMachine();
 		List<Move> moves = machine.getLegalMoves(state, getRole());
 
-		System.out.println(moves.toString());
+		//System.out.println(moves.toString());
 		int score = 0;
 		Move move = moves.get(0);
 		for (int i=0; i < moves.size(); i++) {
 			Move currentMove = moves.get(i);
 
 			int result = minScore(currentMove, state, 0, 100, 0);
-			System.out.println(result);
+			//System.out.println(result);
 			if (result >= score) {
 				score = result;
 				move = moves.get(i);
 			}
 		}
-		System.out.println("Score is: " + score);
+		//System.out.println("Score is: " + score);
 		return move;
 	}
 	@Override
@@ -250,7 +252,7 @@ public class MorganH extends StateMachineGamer {
 
 		long stop = System.currentTimeMillis();
 		notifyObservers(new GamerSelectedMoveEvent(moves, selection, stop - start));
-		System.out.println("The move is:" + selection);
+		//System.out.println("The move is:" + selection);
 		return selection;
 
 	}
@@ -284,8 +286,10 @@ public class MorganH extends StateMachineGamer {
 	private StateMachine stateMachine;
 	private int globalLimit = 1;
 	private int monteCarloCount = 4;
+	private Double monteCarlo_weight = 0.5;
 	private Double mobility_weight = 0.7;
 	private Double focus_weight = 0.3;
+	private Double goal_weight = .7;
 
 
 }
