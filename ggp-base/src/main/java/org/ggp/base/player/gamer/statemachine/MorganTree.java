@@ -77,18 +77,23 @@ public class MorganTree extends StateMachineGamer {
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		// TODO Auto-generated method stub
 		long start = System.currentTimeMillis();
-		treeNode root = new treeNode(state);
+
 		Move selection = null;
 		while (start + 2000 < timeout) {
 
 			treeNode node = null;
+			treeNode root = new treeNode(state);
 			node = SPSelection(root);
+			System.out.println("finished selection " +  System.currentTimeMillis());
 
 			SPExpansion(node);
+			System.out.println("finished expansion " +  System.currentTimeMillis());
 
 			Double reward = SPSimulation(node.current);
+			System.out.println("finished simulation " +  System.currentTimeMillis());
 			int score = reward.intValue();
 			SPBackpropagation(node, score);
+			System.out.println("finished backprop " +  System.currentTimeMillis());
 
 			int high_score = 0;
 			for (treeNode child : node.children) {
@@ -98,7 +103,7 @@ public class MorganTree extends StateMachineGamer {
 				}
 			}
 
-
+			start = System.currentTimeMillis();
 		}
 		return selection;
 
