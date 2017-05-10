@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.ggp.base.apps.player.detail.DetailPanel;
+import org.ggp.base.apps.player.detail.SimpleDetailPanel;
 import org.ggp.base.player.gamer.event.GamerSelectedMoveEvent;
 import org.ggp.base.player.gamer.exception.GamePreviewException;
 import org.ggp.base.util.game.Game;
@@ -11,17 +13,27 @@ import org.ggp.base.util.statemachine.MachineState;
 import org.ggp.base.util.statemachine.Move;
 import org.ggp.base.util.statemachine.Role;
 import org.ggp.base.util.statemachine.StateMachine;
+import org.ggp.base.util.statemachine.cache.CachedStateMachine;
 import org.ggp.base.util.statemachine.exceptions.GoalDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
+import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 
 public class MorganTree extends StateMachineGamer {
 
+
+
 	@Override
 	public StateMachine getInitialStateMachine() {
-		// TODO Auto-generated method stub
-		return null;
+		return new CachedStateMachine(new ProverStateMachine());
 	}
+
+	@Override
+	public DetailPanel getDetailPanel() {
+		return new SimpleDetailPanel();
+	}
+
+
 
 	@Override
 	public void stateMachineMetaGame(long timeout)
@@ -42,7 +54,7 @@ public class MorganTree extends StateMachineGamer {
 		List<Move> moves = getStateMachine().getLegalMoves(getCurrentState(), getRole());
 
 		if (getStateMachine().findRoles().size() == 1) {
-			selection = bestSPMove(getCurrentState());
+			selection = bestSPMove(getCurrentState(), timeout);
 		} else {
 			selection = bestMove(getCurrentState());
 		}
@@ -54,7 +66,6 @@ public class MorganTree extends StateMachineGamer {
 		start = System.currentTimeMillis();
 		return selection;
 
-		return selection;
 	}
 
 	private Move bestMove(MachineState state) {
@@ -81,8 +92,12 @@ public class MorganTree extends StateMachineGamer {
 
 			int high_score = 0;
 			for (treeNode child : node.children) {
-
+				if (child.utility >= high_score) {
+					selection = child.moveTo;
+					high_score = child.utility;
+				}
 			}
+
 
 		}
 		return selection;
@@ -136,7 +151,8 @@ public class MorganTree extends StateMachineGamer {
 
 			treeNode newNode = new treeNode(nextState);
 			newNode.parent = node;
-			node.children.set(i, newNode);
+			node.children.add(newNode);
+			newNode.moveTo = move;
 
 		}
 
@@ -155,9 +171,9 @@ public class MorganTree extends StateMachineGamer {
 		treeNode result = null;
 		for (int i = 0; i < node.children.size(); i++) {
 			int newscore = selectFn(node.children.get(i));
-			if (newscore > score) {
+			if (newscore >= score) {
 				score = newscore;
-				result = node;
+				result = node.children.get(i);
 
 			}
 
@@ -211,6 +227,7 @@ public class MorganTree extends StateMachineGamer {
 	private class treeNode {
 		int visit = 0;
 		int utility = 0;
+		Move moveTo;
 
 		treeNode parent = null;
 
@@ -219,8 +236,8 @@ public class MorganTree extends StateMachineGamer {
 
 		private treeNode(MachineState state) {
 			current = state;
-			visit += 1;
 			children = new ArrayList<treeNode>();
+			moveTo = null;
 		}
 
 		private MachineState getState() {
