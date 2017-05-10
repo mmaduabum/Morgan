@@ -80,10 +80,11 @@ public class MorganTree extends StateMachineGamer {
 
 		Move selection = null;
 		int counter = 0;
+		treeNode root = new treeNode(state);
 		while (start + 2000 < timeout) {
 
 			treeNode node = null;
-			treeNode root = new treeNode(state);
+
 			node = SPSelection(root);
 			System.out.println("finished selection " +  System.currentTimeMillis());
 
@@ -180,7 +181,7 @@ public class MorganTree extends StateMachineGamer {
 			}
 		}
 		int score = 0;
-		treeNode result = null;
+		treeNode result = node;
 		for (int i = 0; i < node.children.size(); i++) {
 			int newscore = selectFn(node.children.get(i));
 			if (newscore >= score) {
@@ -197,7 +198,7 @@ public class MorganTree extends StateMachineGamer {
 		int uti = node.utility;
 		int vis = node.visit;
 		int par_vis = node.parent.visit;
-		Double res = (double)uti/vis + 0.001 * Math.sqrt(2*Math.log((double)par_vis/vis));
+		Double res = (double)uti/vis + 1000 * Math.sqrt(2*Math.log((double)par_vis/vis));
 		return res.intValue();
 
 	}
