@@ -79,6 +79,7 @@ public class MorganTree extends StateMachineGamer {
 		long start = System.currentTimeMillis();
 
 		Move selection = null;
+		int counter = 0;
 		while (start + 2000 < timeout) {
 
 			treeNode node = null;
@@ -102,9 +103,12 @@ public class MorganTree extends StateMachineGamer {
 					high_score = child.utility;
 				}
 			}
-
+			++counter;
 			start = System.currentTimeMillis();
 		}
+		System.out.println("###########################################################");
+		System.out.println("ran loop " + counter + " times");
+		System.out.println("###########################################################");
 		return selection;
 
 	}
@@ -145,22 +149,25 @@ public class MorganTree extends StateMachineGamer {
 	private void SPExpansion(treeNode node)
 		throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
 		StateMachine machine = getStateMachine();
-		List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
-		for (int i=0; i < moves.size(); i++) {
-			Move move = moves.get(i);
-			List<Role> roles = machine.getRoles();
-			ArrayList<Move> new_moves = new ArrayList<Move>();
-			new_moves.add(move);
 
-			MachineState nextState = machine.getNextState(node.current, new_moves);
+		if (!machine.findTerminalp(node.current)) {
 
-			treeNode newNode = new treeNode(nextState);
-			newNode.parent = node;
-			node.children.add(newNode);
-			newNode.moveTo = move;
+			List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
+			for (int i=0; i < moves.size(); i++) {
+				Move move = moves.get(i);
+				List<Role> roles = machine.getRoles();
+				ArrayList<Move> new_moves = new ArrayList<Move>();
+				new_moves.add(move);
 
+				MachineState nextState = machine.getNextState(node.current, new_moves);
+
+				treeNode newNode = new treeNode(nextState);
+				newNode.parent = node;
+				node.children.add(newNode);
+				newNode.moveTo = move;
+
+			}
 		}
-
 	}
 
 	private treeNode SPSelection(treeNode node) {
@@ -190,7 +197,7 @@ public class MorganTree extends StateMachineGamer {
 		int uti = node.utility;
 		int vis = node.visit;
 		int par_vis = node.parent.visit;
-		Double res = uti + Math.sqrt(Math.log((double)vis/par_vis));
+		Double res = (double)uti/vis + 0.001 * Math.sqrt(2*Math.log((double)par_vis/vis));
 		return res.intValue();
 
 	}
