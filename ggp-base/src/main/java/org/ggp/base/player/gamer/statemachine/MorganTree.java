@@ -97,15 +97,17 @@ public class MorganTree extends StateMachineGamer {
 			SPBackpropagation(node, score);
 			System.out.println("finished backprop " +  System.currentTimeMillis());
 
-			int high_score = 0;
-			for (treeNode child : node.children) {
-				if (child.utility >= high_score) {
-					selection = child.moveTo;
-					high_score = child.utility;
-				}
-			}
+
+
 			++counter;
 			start = System.currentTimeMillis();
+		}
+		int high_score = 0;
+		for (treeNode child : root.children) {
+			if (child.utility/child.visit >= high_score) {
+				selection = child.moveTo;
+				high_score = child.utility;
+			}
 		}
 		System.out.println("###########################################################");
 		System.out.println("ran loop " + counter + " times");
@@ -172,7 +174,7 @@ public class MorganTree extends StateMachineGamer {
 	}
 
 	private treeNode SPSelection(treeNode node) {
-		if (node.visit == 0) {
+		if (node.visit == 0 || node.children.size() == 0) {
 			return node;
 		}
 		for (int i = 0; i < node.children.size(); i++) {
@@ -181,7 +183,7 @@ public class MorganTree extends StateMachineGamer {
 			}
 		}
 		int score = 0;
-		treeNode result = node;
+		treeNode result = null;
 		for (int i = 0; i < node.children.size(); i++) {
 			int newscore = selectFn(node.children.get(i));
 			if (newscore >= score) {
@@ -191,6 +193,11 @@ public class MorganTree extends StateMachineGamer {
 			}
 
 		}
+		if (result == null) {
+			result = node.children.get(0);
+		} else {
+
+		}
 		return SPSelection(result);
 	}
 
@@ -198,7 +205,7 @@ public class MorganTree extends StateMachineGamer {
 		int uti = node.utility;
 		int vis = node.visit;
 		int par_vis = node.parent.visit;
-		Double res = (double)uti/vis + 1000 * Math.sqrt(2*Math.log((double)par_vis/vis));
+		Double res = (double)uti/vis + 10 * Math.sqrt(2*Math.log((double)par_vis/vis));
 		return res.intValue();
 
 	}
