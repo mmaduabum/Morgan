@@ -79,39 +79,40 @@ public class MorganTree extends StateMachineGamer {
 		long start = System.currentTimeMillis();
 
 		Move selection = null;
-		int counter = 0;
-		treeNode root = new treeNode(state);
+		if (root == null) {
+			root = new treeNode(state);
+		}
+		int depth = 0;
 		while (start + 2000 < timeout) {
 
 			treeNode node = null;
 
 			node = SPSelection(root);
-			System.out.println("finished selection " +  System.currentTimeMillis());
-
 			SPExpansion(node);
-			System.out.println("finished expansion " +  System.currentTimeMillis());
-
-			Double reward = SPSimulation(node.current);
-			System.out.println("finished simulation " +  System.currentTimeMillis());
+			Double reward = SPSimulation(node.current); //change from node created
+			if (getStateMachine().findTerminalp(node.current)) {
+				depth++;
+//				System.out.println(node.current);
+//				System.out.println(node.visit);
+			}
 			int score = reward.intValue();
 			SPBackpropagation(node, score);
-			System.out.println("finished backprop " +  System.currentTimeMillis());
-
-
-
-			++counter;
 			start = System.currentTimeMillis();
 		}
 		int high_score = 0;
+		treeNode newRoot = null;
+		System.out.println("...");
 		for (treeNode child : root.children) {
+			System.out.println("move to this child: " + child.moveTo);
+			System.out.println("utility: " + child.utility);
+			System.out.println("visits: " + child.visit);
 			if (child.utility/child.visit >= high_score) {
 				selection = child.moveTo;
+				newRoot = child;
 				high_score = child.utility;
 			}
 		}
-		System.out.println("###########################################################");
-		System.out.println("ran loop " + counter + " times");
-		System.out.println("###########################################################");
+		root = newRoot;
 		return selection;
 
 	}
@@ -122,19 +123,17 @@ public class MorganTree extends StateMachineGamer {
 		if (node.parent != null) {
 			SPBackpropagation(node.parent, score);
 		}
-
-
 	}
 
 	private double SPSimulation(MachineState state)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		StateMachine machine = getStateMachine();
 		if (machine.findTerminalp(state)) {
+			//System.out.println(machine.findReward(getRole(), state));
 			return machine.findReward(getRole(), state);
 		}
 		List<Role> roles = new ArrayList<Role>(machine.getRoles());
 		int numRoles = roles.size();
-
 		ArrayList<Move> moveSet = new ArrayList<Move>(numRoles);
 		for (int i = 0; i < numRoles; i++) {
 			List<Move> moves = machine.getLegalMoves(state, roles.get(i));
@@ -148,7 +147,7 @@ public class MorganTree extends StateMachineGamer {
 
 	}
 
-
+	int count = 0;
 	private void SPExpansion(treeNode node)
 		throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
 		StateMachine machine = getStateMachine();
@@ -161,15 +160,15 @@ public class MorganTree extends StateMachineGamer {
 				List<Role> roles = machine.getRoles();
 				ArrayList<Move> new_moves = new ArrayList<Move>();
 				new_moves.add(move);
-
 				MachineState nextState = machine.getNextState(node.current, new_moves);
-
 				treeNode newNode = new treeNode(nextState);
 				newNode.parent = node;
 				node.children.add(newNode);
 				newNode.moveTo = move;
 
 			}
+		} else {
+			count++;
 		}
 	}
 
@@ -178,35 +177,28 @@ public class MorganTree extends StateMachineGamer {
 			return node;
 		}
 		for (int i = 0; i < node.children.size(); i++) {
-			if (node.children.get(i).visit ==0) {
+			if (node.children.get(i).visit == 0) {
 				return node.children.get(i);
 			}
 		}
-		int score = 0;
+		double score = 0;
 		treeNode result = null;
 		for (int i = 0; i < node.children.size(); i++) {
-			int newscore = selectFn(node.children.get(i));
+			double newscore = selectFn(node.children.get(i));
 			if (newscore >= score) {
 				score = newscore;
 				result = node.children.get(i);
-
 			}
-
-		}
-		if (result == null) {
-			result = node.children.get(0);
-		} else {
-
 		}
 		return SPSelection(result);
 	}
 
-	private int selectFn(treeNode node) {
-		int uti = node.utility;
-		int vis = node.visit;
-		int par_vis = node.parent.visit;
-		Double res = (double)uti/vis + 10 * Math.sqrt(2*Math.log((double)par_vis/vis));
-		return res.intValue();
+	private double selectFn(treeNode node) {
+		double uti = node.utility;
+		double vis = node.visit;
+		double par_vis = node.parent.visit;
+		double res = uti/vis + 500 * Math.sqrt(2* Math.log(par_vis) / vis);
+		return res;
 
 	}
 
@@ -243,6 +235,7 @@ public class MorganTree extends StateMachineGamer {
 	private Double mobility_weight = 0.7;
 	private Double focus_weight = 0.3;
 	private Double goal_weight = .7;
+	private treeNode root;
 
 	private class treeNode {
 		int visit = 0;
