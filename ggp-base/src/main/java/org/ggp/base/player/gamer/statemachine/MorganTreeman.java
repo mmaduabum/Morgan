@@ -88,7 +88,7 @@ public class MorganTreeman extends StateMachineGamer {
 
 			start = System.currentTimeMillis();
 		}
-		int high_score = 0;
+		double high_score = 0;
 		MonteNode newRoot = null;
 		System.out.println("...");
 		for (MonteNode child : root.children) {
@@ -98,7 +98,7 @@ public class MorganTreeman extends StateMachineGamer {
 			if (child.utility/child.visit >= high_score) {
 				selection = child.moveTo;
 				newRoot = child;
-				high_score = (int) child.utility;
+				high_score = (child.utility/child.visit);
 			}
 		}
 		newRoot.parent = null;
@@ -215,7 +215,7 @@ public class MorganTreeman extends StateMachineGamer {
 
 	private class MonteNode {
 		double utility = 0;
-		int visit = 0;
+		double visit = 0;
 		MachineState current = null;
 		MonteNode parent = null;
 		Move moveTo;
