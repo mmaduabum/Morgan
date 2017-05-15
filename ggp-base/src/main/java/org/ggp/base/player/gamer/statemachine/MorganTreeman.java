@@ -31,13 +31,10 @@ public class MorganTreeman extends StateMachineGamer {
 		return new SimpleDetailPanel();
 	}
 
-
-
 	@Override
 	public void stateMachineMetaGame(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
@@ -54,7 +51,7 @@ public class MorganTreeman extends StateMachineGamer {
 		if (getStateMachine().findRoles().size() == 1) {
 			selection = bestSPMove(getCurrentState(), timeout);
 		} else {
-			selection = bestMove(getCurrentState());
+			selection = bestMove(getCurrentState(), timeout);
 		}
 
 		long stop = System.currentTimeMillis();
@@ -66,23 +63,44 @@ public class MorganTreeman extends StateMachineGamer {
 
 	}
 
-	private Move bestMove(MachineState state) {
-		// TODO Auto-generated method stub
+	private MonteMPNode MPSelect(MonteMPNode node) {
+
+
 		return null;
 	}
 
-	MonteNode root = null;
+	MonteMPNode MProot = null;
+	private Move bestMove(MachineState state, long timeout) {
+		long start = System.currentTimeMillis();
+		Move selection = null;
+		if (MProot == null) {
+			MProot = new MonteMPNode(state, true);
+		}
+		while (start + 2000 < timeout) {
+			MonteMPNode node  = MPSelect(MProot);
+
+			start = System.currentTimeMillis();
+		}
+
+
+		return null;
+	}
+
+
+	MonteNode Sproot = null;
 	private Move bestSPMove(MachineState state, long timeout)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		long start  = System.currentTimeMillis();
 
-		root = new MonteNode(state);
+		if (Sproot == null) {
+			Sproot = new MonteNode(state);
+		}
 		Move selection = null;
 		while (start + 2000 < timeout) {
 
-			MonteNode node = SPSelect(root);
+			MonteNode node = SPSelect(Sproot);
 			MonteNode child = SPExpand(node);
-			int reward = SPSimulate(child.current);
+			double reward = SPSimulate(child.current);
 			SPBackpropagate(reward, child);
 
 
@@ -91,7 +109,7 @@ public class MorganTreeman extends StateMachineGamer {
 		double high_score = 0;
 		MonteNode newRoot = null;
 		System.out.println("...");
-		for (MonteNode child : root.children) {
+		for (MonteNode child : Sproot.children) {
 			System.out.println("move to this child: " + child.moveTo);
 			System.out.println("utility: " + child.utility);
 			System.out.println("visits: " + child.visit);
@@ -102,7 +120,7 @@ public class MorganTreeman extends StateMachineGamer {
 			}
 		}
 		newRoot.parent = null;
-		root = newRoot;
+		Sproot = newRoot;
 
 		return selection;
 
@@ -180,7 +198,7 @@ public class MorganTreeman extends StateMachineGamer {
 
 	}
 
-	private void SPBackpropagate(int reward, MonteNode node) {
+	private void SPBackpropagate(double reward, MonteNode node) {
 		node.visit += 1;
 		node.utility += reward;
 		if (node.parent != null) {
@@ -212,7 +230,7 @@ public class MorganTreeman extends StateMachineGamer {
 		// TODO Auto-generated method stub
 		return "Morgan Treeman";
 	}
-
+	//Note MonteNode is only for single player
 	private class MonteNode {
 		double utility = 0;
 		double visit = 0;
@@ -229,7 +247,20 @@ public class MorganTreeman extends StateMachineGamer {
 			children = new ArrayList<MonteNode>();
 
 		}
+	}
 
+	private class MonteMPNode {
+		double utility = 0;
+		double visit = 0;
+		MachineState current = null;
+		Boolean isMax;
+
+		private MonteMPNode(MachineState state, Boolean max) {
+			utility = 0;
+			visit = 0;
+			current = state;
+			isMax = max;
+		}
 	}
 
 }
