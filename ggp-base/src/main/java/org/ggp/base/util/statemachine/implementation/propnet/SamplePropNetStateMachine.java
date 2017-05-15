@@ -50,6 +50,43 @@ public class SamplePropNetStateMachine extends StateMachine {
         }
     }
 
+    private void markBases(List<GdlSentence> marks) {
+    	for (GdlSentence key : this.propNet.getBasePropositions().keySet()) {
+    		if (marks.contains(key)) {
+    			this.propNet.getBasePropositions().get(key).setValue(true);
+    		} else {
+    			this.propNet.getBasePropositions().get(key).setValue(false);
+    		}
+    	}
+    }
+
+    private void markActions(List<GdlSentence> marks) {
+    	for (GdlSentence key : this.propNet.getInputPropositions().keySet()) {
+    		if (marks.contains(key)) {
+    			this.propNet.getInputPropositions().get(key).setValue(true);
+    		} else {
+    			this.propNet.getInputPropositions().get(key).setValue(false);
+    		}
+    	}
+    }
+
+    private void clearBases(List<GdlSentence> marks) {
+    	for (GdlSentence key : this.propNet.getBasePropositions().keySet()) {
+			this.propNet.getBasePropositions().get(key).setValue(false);
+    	}
+    }
+
+    private void getLegalMoves(Role role, MachineState state) {
+    	List<GdlSentence> marks = state.getContents();
+    	markBases(marks);
+    	for (Proposition prop : this.propNet.getLegalPropositions().get(role)) {
+
+    	}
+    }
+
+
+
+
     /**
      * Computes if the state is terminal. Should return the value
      * of the terminal proposition for the state.
