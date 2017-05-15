@@ -50,6 +50,76 @@ public class SamplePropNetStateMachine extends StateMachine {
         }
     }
 
+    private void markBases(List<GdlSentence> marks) {
+    	for (GdlSentence key : this.propNet.getBasePropositions().keySet()) {
+    		if (marks.contains(key)) {
+    			this.propNet.getBasePropositions().get(key).setValue(true);
+    		} else {
+    			this.propNet.getBasePropositions().get(key).setValue(false);
+    		}
+    	}
+    }
+
+    private void markActions(List<GdlSentence> marks) {
+    	for (GdlSentence key : this.propNet.getInputPropositions().keySet()) {
+    		if (marks.contains(key)) {
+    			this.propNet.getInputPropositions().get(key).setValue(true);
+    		} else {
+    			this.propNet.getInputPropositions().get(key).setValue(false);
+    		}
+    	}
+    }
+
+    private void clearBases(List<GdlSentence> marks) {
+    	for (GdlSentence key : this.propNet.getBasePropositions().keySet()) {
+			this.propNet.getBasePropositions().get(key).setValue(false);
+    	}
+    }
+
+    //TODO: finish cases
+    private boolean propmarkp(Proposition pee) {
+    	if (this.propNet.getBasePropositions().keySet().contains(pee)) {
+    		return pee.getValue();
+    	} else if (this.propNet.getInputPropositions().keySet().contains(pee)) {
+    		return pee.getValue();
+    	}
+    	//else if view
+    	//else if negation
+    	//else if conjuction
+    	//else if disjunction
+
+    	return false;
+    }
+
+    private List<Proposition> getLegalMoves(Role role, MachineState state) {
+    	List<GdlSentence> marks = new ArrayList(state.getContents());
+    	markBases(marks);
+    	//List<Role> roles = this.propNet.getRoles();
+    	List<Proposition> actions = new ArrayList();
+    	for (Proposition prop : this.propNet.getLegalPropositions().get(role)) {
+    		//TODO: write propmarkp
+    		//if propmarkp(prop):
+    			//actions.add(prop)
+    	}
+
+    	return actions;
+    }
+
+    //TODO: implement propNext
+    private List<MachineState> propNext(Move move, MachineState state) {
+    	List<MachineState> states = new ArrayList();
+    	//needs propmarkp
+    	return states;
+    }
+    
+    //TODO: implement propReward
+    private double propReward(Role role, MachineState state) {
+    	double reward = 0.0;
+    	//needs propmarkp
+    	return reward;
+    }
+
+
     /**
      * Computes if the state is terminal. Should return the value
      * of the terminal proposition for the state.
