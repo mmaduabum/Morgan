@@ -63,16 +63,59 @@ public class MorganTreeman extends StateMachineGamer {
 
 	}
 
-	private MonteMPNode MPSelect(MonteMPNode node) {
-
-
-		return null;
+	private MonteMPNode MPSelect(MonteMPNode node)
+		throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+	List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
+	List<List<Move>> jointMoves = new ArrayList();
+	for (Move move : moves) {
+		jointMoves.addAll(getStateMachine().getLegalJointMoves(node.current, getRole(), move));
 	}
 
-	MonteMPNode MProot = null;
-	private Move bestMove(MachineState state, long timeout) {
+
+	// mp select, first legal moves to get min nodes
+	// then legal joint moves
+
+
+
+	if (node.grandchildren.size() < jointMoves.size() || node.visit == 0) {
+		return node;
+	}
+	double score = 0;
+	MonteMPNode result = null;
+
+
+
+
+	for (int i = 0; i < node.grandchildren.size(); i++) {
+		double newscore = MPSelectFn(node.grandchildren.get(i));
+		if (newscore >= score) {
+			score = newscore;
+			result = node.grandchildren.get(i);
+		}
+	}
+	return MPSelect(result);
+	}
+
+	private MonteMPNode MPExpand(MonteMPNode node)
+			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+
+	}
+
+
+	private double MPSelectFn(MonteMPNode node) {
+		// TODO Auto-generated method stub
+		if (node.isMax) {
+
+		} else {
+
+		}
+	}
+
+	private Move bestMove(MachineState state, long timeout)
+			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		long start = System.currentTimeMillis();
 		Move selection = null;
+
 		if (MProot == null) {
 			MProot = new MonteMPNode(state, true);
 		}
@@ -87,7 +130,7 @@ public class MorganTreeman extends StateMachineGamer {
 	}
 
 
-	MonteNode Sproot = null;
+
 	private Move bestSPMove(MachineState state, long timeout)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		long start  = System.currentTimeMillis();
@@ -177,7 +220,6 @@ public class MorganTreeman extends StateMachineGamer {
 	}
 
 
-
 	private int SPSimulate(MachineState state)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		StateMachine machine = getStateMachine();
@@ -249,18 +291,26 @@ public class MorganTreeman extends StateMachineGamer {
 		}
 	}
 
+
+
 	private class MonteMPNode {
 		double utility = 0;
 		double visit = 0;
 		MachineState current = null;
+		MonteMPNode parent = null;
 		Boolean isMax;
+		ArrayList<MonteMPNode> grandchildren;
 
 		private MonteMPNode(MachineState state, Boolean max) {
 			utility = 0;
 			visit = 0;
 			current = state;
 			isMax = max;
+			grandchildren = new ArrayList<MonteMPNode>();
 		}
 	}
+
+	MonteNode Sproot = null;
+	MonteMPNode MProot = null;
 
 }
