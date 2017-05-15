@@ -70,11 +70,11 @@ public class MorganH extends StateMachineGamer {
 	}
 
 	private int evalfn(Role role, MachineState state) throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
-		//int mh = mobilityHeuristic(role, state);
-		//int ofh = oppFocusHeuristic(role, state);
-		int mc = monteCarlo(state);
+		int mh = mobilityHeuristic(role, state);
+		int ofh = oppFocusHeuristic(role, state);
+		//int mc = monteCarlo(state);
 		int gl = goalProximityHeuristic(role, state);
-		Double res = gl * goal_weight + mc * monteCarlo_weight;
+		Double res = gl * .8  + ofh * .3 + mh * .5;
 		return res.intValue();
 	}
 
@@ -284,7 +284,7 @@ public class MorganH extends StateMachineGamer {
 	private Role role;
 	private MachineState currentState;
 	private StateMachine stateMachine;
-	private int globalLimit = 1;
+	private int globalLimit = 3;
 	private int monteCarloCount = 4;
 	private Double monteCarlo_weight = 0.5;
 	private Double mobility_weight = 0.7;
