@@ -95,29 +95,30 @@ public class MorganTree extends StateMachineGamer {
 //				System.out.println(node.current);
 //				System.out.println(node.visit);
 			}
-			int score = reward.intValue();
+			double score = reward;
 			SPBackpropagation(node, score);
 			start = System.currentTimeMillis();
 		}
-		int high_score = 0;
+		double high_score = 0;
 		treeNode newRoot = null;
 		System.out.println("...");
 		for (treeNode child : root.children) {
 			System.out.println("move to this child: " + child.moveTo);
 			System.out.println("utility: " + child.utility);
 			System.out.println("visits: " + child.visit);
-			if (child.utility/child.visit >= high_score) {
+			if ((child.utility/child.visit) >= high_score) {
 				selection = child.moveTo;
 				newRoot = child;
-				high_score = child.utility;
+				high_score = (child.utility/child.visit);
 			}
 		}
 		root = newRoot;
+		root.parent = null; //makes it worse?
 		return selection;
 
 	}
 
-	private void SPBackpropagation(treeNode node, int score) {
+	private void SPBackpropagation(treeNode node, double score) {
 		node.visit += 1;
 		node.utility += score;
 		if (node.parent != null) {
@@ -197,7 +198,7 @@ public class MorganTree extends StateMachineGamer {
 		double uti = node.utility;
 		double vis = node.visit;
 		double par_vis = node.parent.visit;
-		double res = uti/vis + 500 * Math.sqrt(2* Math.log(par_vis) / vis);
+		double res = uti/vis + 50 * Math.sqrt(2* Math.log(par_vis) / vis);
 		return res;
 
 	}
@@ -238,8 +239,8 @@ public class MorganTree extends StateMachineGamer {
 	private treeNode root;
 
 	private class treeNode {
-		int visit = 0;
-		int utility = 0;
+		double visit;
+		double utility;
 		Move moveTo;
 
 		treeNode parent = null;
@@ -248,6 +249,8 @@ public class MorganTree extends StateMachineGamer {
 		MachineState current = null;
 
 		private treeNode(MachineState state) {
+			visit = 0;
+			utility = 0;
 			current = state;
 			children = new ArrayList<treeNode>();
 			moveTo = null;
@@ -257,11 +260,11 @@ public class MorganTree extends StateMachineGamer {
 			return current;
 		}
 
-		private int getVisits() {
+		private double getVisits() {
 			return visit;
 		}
 
-		private int getGoal() {
+		private double getGoal() {
 			return utility;
 		}
 
