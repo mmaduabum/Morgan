@@ -13,6 +13,9 @@ import org.ggp.base.util.gdl.grammar.GdlRelation;
 import org.ggp.base.util.gdl.grammar.GdlSentence;
 import org.ggp.base.util.propnet.architecture.Component;
 import org.ggp.base.util.propnet.architecture.PropNet;
+import org.ggp.base.util.propnet.architecture.components.And;
+import org.ggp.base.util.propnet.architecture.components.Not;
+import org.ggp.base.util.propnet.architecture.components.Or;
 import org.ggp.base.util.propnet.architecture.components.Proposition;
 import org.ggp.base.util.propnet.factory.OptimizingPropNetFactory;
 import org.ggp.base.util.statemachine.MachineState;
@@ -76,18 +79,46 @@ public class SamplePropNetStateMachine extends StateMachine {
     	}
     }
 
-    //TODO: finish cases
-    private boolean propmarkp(Proposition pee) {
+    private boolean propmarkp(Component pee) {
     	if (this.propNet.getBasePropositions().keySet().contains(pee)) {
     		return pee.getValue();
     	} else if (this.propNet.getInputPropositions().keySet().contains(pee)) {
     		return pee.getValue();
+    	} else if (pee instanceof Not) {
+    		propmarkNegation(pee);
+    	} else if (pee instanceof And) {
+    		return propmarkConjunction(pee);
+    	} else if (pee instanceof Or) {
+    		return propmarkDisjunction(pee);
+    	} else {
+    		return propmarkp(pee.getSingleInput());
     	}
-    	//else if view
-    	//else if negation
-    	//else if conjuction
-    	//else if disjunction
 
+    	return false;
+    }
+
+    private boolean propmarkNegation(Component pee) {
+    	return !propmarkp(pee.getSingleInput());
+    }
+
+
+    private boolean propmarkConjunction(Component pee) {
+    	Set<Component> sources = pee.getInputs();
+    	for (Component source : sources) {
+    		if (!propmarkp(source)) {
+    			return false;
+    		}
+    	}
+    	return true;
+    }
+
+    private boolean propmarkDisjunction(Component pee) {
+    	Set<Component> sources = pee.getInputs();
+    	for (Component source : sources) {
+    		if (propmarkp(source)) {
+    			return true;
+    		}
+    	}
     	return false;
     }
 
@@ -97,28 +128,34 @@ public class SamplePropNetStateMachine extends StateMachine {
     	//List<Role> roles = this.propNet.getRoles();
     	List<Proposition> actions = new ArrayList();
     	for (Proposition prop : this.propNet.getLegalPropositions().get(role)) {
-    		//TODO: write propmarkp
-    		//if propmarkp(prop):
-    			//actions.add(prop)
+    		if (propmarkp(prop)) {
+    			actions.add(prop);
+    		}
     	}
 
     	return actions;
     }
 
-    //TODO: implement propNext
-    private List<MachineState> propNext(Move move, MachineState state) {
-    	List<MachineState> states = new ArrayList();
-    	//needs propmarkp
-    	return states;
-    }
-    
-    //TODO: implement propReward
-    private double propReward(Role role, MachineState state) {
-    	double reward = 0.0;
-    	//needs propmarkp
-    	return reward;
+    private List<Boolean> propNext(Move move, MachineState state) {
+    	List<Boolean> nexts = new ArrayList();
+    	List<GdlSentence> marks = new ArrayList(state.getContents());
+    	markActions(marks);
+    	markBases(marks);
+    	for (Map.Entry<GdlSentence, Proposition> entry : this.propNet.getBasePropositions().entrySet()) {
+    		Proposition p = entry.getValue();
+    		nexts.add(propmarkp(p.getSingleInput().getSingleInput()));
+    	}
+    	return nexts;
     }
 
+    //TODO: make sure this is right. sudo code doesnt match up well
+    private double propReward(Role role, MachineState state) throws GoalDefinitionException {
+    	return getGoal(state, role);
+    }
+
+    private boolean propterminalp(MachineState state) {
+    	return isTerminal(state);
+    }
 
     /**
      * Computes if the state is terminal. Should return the value
@@ -126,8 +163,9 @@ public class SamplePropNetStateMachine extends StateMachine {
      */
     @Override
     public boolean isTerminal(MachineState state) {
-        // TODO: Compute whether the MachineState is terminal.
-        return false;
+    	List<GdlSentence> marks = new ArrayList(state.getContents());
+    	markBases(marks);
+        return propmarkp(this.propNet.getTerminalProposition());
     }
 
     /**
@@ -140,8 +178,13 @@ public class SamplePropNetStateMachine extends StateMachine {
     @Override
     public int getGoal(MachineState state, Role role)
             throws GoalDefinitionException {
-        // TODO: Compute the goal for role in state.
-        return -1;
+    	Set<Proposition> gprops = this.propNet.getGoalPropositions().get(role);
+    	for (Proposition pee : gprops) {
+    		if (propmarkp(pee)) {
+    			return getGoalValue(pee);
+    		}
+    	}
+        return 0;
     }
 
     /**
