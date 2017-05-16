@@ -107,10 +107,58 @@ public class MorganTreeman extends StateMachineGamer {
 		}
 	}
 
-	private MaxNode MPExpand(MaxNode node) {
+	private MaxNode MPExpand(MaxNode node) throws MoveDefinitionException, TransitionDefinitionException {
 		StateMachine machine = getStateMachine();
 		if (machine.findTerminalp(node.current)) {
 			return node;
+		}
+		List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
+		int amount_of_min_nodes = node.children.size();
+		MinNode ExpandedMin;
+		if (amount_of_min_nodes == 0) { //makes sure at leas one min node in list
+			ExpandedMin = new MinNode(node, moves.get(0));
+			node.children.add(ExpandedMin);
+			amount_of_min_nodes = 1;
+		}
+		ExpandedMin = node.children.get(amount_of_min_nodes - 1);
+		if (ExpandedMin.hasAllChildren) { //make new min node and add grandchild
+			ExpandedMin = new MinNode(node, moves.get(amount_of_min_nodes)); //not -1 because new min node and index starts at 0
+			node.children.add(ExpandedMin);
+		} else {
+			ExpandedMin = node.children.get(amount_of_min_nodes - 1);
+		}
+		//now add grandchild
+		List<List<Move>> jointmoves = getStateMachine().getLegalJointMoves(node.current, getRole(), ExpandedMin.moveTo);
+		List<Move> jmove = jointmoves.get(ExpandedMin.children.size());
+		MachineState newState = machine.getNextState(node.current, jmove);
+		MaxNode newestGrandChild = new MaxNode(newState, ExpandedMin);
+		ExpandedMin.children.add(newestGrandChild);
+		if (ExpandedMin.children.size() == jointmoves.size()) {
+			ExpandedMin.hasAllChildren = true;
+			if (node.children.size() == moves.size()) {
+				node.hasAllGrandChildren = true;
+			}
+		}
+		return newestGrandChild;
+	}
+
+
+	private Double MPSimulate(MachineState state) throws GoalDefinitionException, MoveDefinitionException, TransitionDefinitionException {
+		StateMachine machine = getStateMachine();
+		if (machine.findTerminalp(state)) {
+			return (double) machine.findReward(getRole(), state);
+		}
+		List< List<Move> > jointmoves = machine.getLegalJointMoves(state);
+		Random rand = new Random();
+		int n = rand.nextInt(jointmoves.size());
+		return MPSimulate(machine.getNextState(state, jointmoves.get(n)));
+	}
+
+	private void MPBackpropagate(MonteMPNode node, double reward) {
+		node.visits += 1;
+		node.utility += reward;
+		if (node.parent != null) {
+			MPBackpropagate(node.parent, reward);
 		}
 	}
 
@@ -118,18 +166,22 @@ public class MorganTreeman extends StateMachineGamer {
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		long start = System.currentTimeMillis();
 		Move selection = null;
-
-		if (MProot == null) {
-			MProot = new MaxNode(state, null);
-		}
+		MProot = new MaxNode(state, null); //not caching
 		while (start + 2000 < timeout) {
 			MaxNode node  = MPSelect(MProot);
 			MaxNode expandNode = MPExpand(node);
+			Double score = MPSimulate(expandNode.current);
+			MPBackpropagate(expandNode, score);
 			start = System.currentTimeMillis();
 		}
-
-
-		return null;
+		double high_score = 0;
+		for (MinNode x : MProot.children) {
+			if (x.utility/x.visits >= high_score) {
+				selection = x.moveTo;
+				high_score = x.utility/x.visits;
+			}
+		}
+		return selection;
 	}
 
 
@@ -299,7 +351,6 @@ public class MorganTreeman extends StateMachineGamer {
 	private class MonteMPNode {
 		MonteMPNode parent = null;
 		double utility = 0;
-
 		double visits = 0;
 
 
@@ -309,15 +360,18 @@ public class MorganTreeman extends StateMachineGamer {
 	}
 
 	private class MinNode extends MonteMPNode {
-		ArrayList<MaxNode> children;
-		private MinNode(MonteMPNode parent) {
+		ArrayList<MaxNode> children = new ArrayList<MaxNode>();
+		Boolean hasAllChildren = false;
+		Move moveTo;
+		private MinNode(MonteMPNode parent, Move moveT) {
 			super(parent);
+			moveTo = moveT;
 		}
 	}
 
 	private class MaxNode extends MonteMPNode {
 		Boolean hasAllGrandChildren = false;
-		ArrayList<MinNode> children;
+		ArrayList<MinNode> children = new ArrayList<MinNode>();;
 		MachineState current = null;
 		private MaxNode(MachineState state, MonteMPNode parent) {
 			super(parent);
