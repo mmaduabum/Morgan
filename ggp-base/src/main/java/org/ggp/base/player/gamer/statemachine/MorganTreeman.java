@@ -63,22 +63,69 @@ public class MorganTreeman extends StateMachineGamer {
 
 	}
 
-	private MonteMPNode MPSelect(MonteMPNode node) {
-
-
-		return null;
+	private MaxNode MPSelect(MaxNode node) {
+		if (node.visits == 0) {
+			return node;
+		}
+		if (!node.hasAllGrandChildren) {
+			return node;
+		}
+		MinNode maxOfMins = null;
+		double maximum = 0.0;
+		for (int i = 0; i < node.children.size(); i++) {
+			MinNode child = node.children.get(i);
+			double score = MPSelectFN(child);
+			if (score >= maximum) {
+				maxOfMins = child;
+				maximum = score;
+			}
+		}
+		for (int i = 0; i < maxOfMins.children.size(); i++) {
+			MaxNode child = maxOfMins.children.get(i);
+			double score = MPSelectFN(child);
+			if (score >= maximum || i == 0) {
+				node = child;
+				maximum = score;
+			}
+		}
+		return MPSelect(node);
 	}
 
-	MonteMPNode MProot = null;
+	private double MPSelectFN(MonteMPNode node) {
+		double uti = node.utility;
+		double vis = node.visits;
+		double par_vis = node.parent.visits;
+		if (node instanceof MaxNode) {
+			double res = -1.0 * uti / vis + 50 * Math.sqrt(Math.log(par_vis) / vis);
+			return res;
+		} else if (node instanceof MinNode) {
+			double res = uti / vis + 50 * Math.sqrt(Math.log(par_vis) / vis);
+			return res;
+		} else {
+			System.out.println("HELP! Wrong!");
+			return 0.0;
+		}
+	}
+
+	private MaxNode MPExpand(MaxNode node) {
+		StateMachine machine = getStateMachine();
+		if (machine.findTerminalp(node.current)) {
+			return node;
+		}
+
+	}
+
+
+	MaxNode MProot = null;
 	private Move bestMove(MachineState state, long timeout) {
 		long start = System.currentTimeMillis();
 		Move selection = null;
 		if (MProot == null) {
-			MProot = new MonteMPNode(state, true);
+			MProot = new MaxNode(state, null);
 		}
 		while (start + 2000 < timeout) {
-			MonteMPNode node  = MPSelect(MProot);
-
+			MaxNode node  = MPSelect(MProot);
+			MaxNode expandNode = MPExpand(node);
 			start = System.currentTimeMillis();
 		}
 
@@ -250,17 +297,31 @@ public class MorganTreeman extends StateMachineGamer {
 	}
 
 	private class MonteMPNode {
+		MonteMPNode parent = null;
 		double utility = 0;
-		double visit = 0;
-		MachineState current = null;
-		Boolean isMax;
+		double visits = 0;
 
-		private MonteMPNode(MachineState state, Boolean max) {
-			utility = 0;
-			visit = 0;
-			current = state;
-			isMax = max;
+		private MonteMPNode(MonteMPNode parent) {
+			this.parent = parent;
 		}
+	}
+
+	private class MinNode extends MonteMPNode {
+		ArrayList<MaxNode> children;
+		private MinNode(MonteMPNode parent) {
+			super(parent);
+		}
+	}
+
+	private class MaxNode extends MonteMPNode {
+		Boolean hasAllGrandChildren = false;
+		ArrayList<MinNode> children;
+		MachineState current = null;
+		private MaxNode(MachineState state, MonteMPNode parent) {
+			super(parent);
+			current = state;
+		}
+
 	}
 
 }
