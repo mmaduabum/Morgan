@@ -63,6 +63,7 @@ public class MorganTreeman extends StateMachineGamer {
 
 	}
 
+<<<<<<< HEAD
 	private MaxNode MPSelect(MaxNode node) {
 		if (node.visits == 0) {
 			return node;
@@ -89,6 +90,14 @@ public class MorganTreeman extends StateMachineGamer {
 			}
 		}
 		return MPSelect(node);
+=======
+	private MonteMPNode MPSelect(MonteMPNode node)
+		throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+	List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
+	List<List<Move>> jointMoves = new ArrayList();
+	for (Move move : moves) {
+		jointMoves.addAll(getStateMachine().getLegalJointMoves(node.current, getRole(), move));
+>>>>>>> 937eeaf12aa98b02c75730eb85db229107c8ae6a
 	}
 
 	private double MPSelectFN(MonteMPNode node) {
@@ -113,13 +122,58 @@ public class MorganTreeman extends StateMachineGamer {
 			return node;
 		}
 
+<<<<<<< HEAD
+=======
+	// mp select, first legal moves to get min nodes
+	// then legal joint moves
+
+
+
+	if (node.grandchildren.size() < jointMoves.size() || node.visit == 0) {
+		return node;
+>>>>>>> 937eeaf12aa98b02c75730eb85db229107c8ae6a
+	}
+	double score = 0;
+	MonteMPNode result = null;
+
+
+<<<<<<< HEAD
+	MaxNode MProot = null;
+	private Move bestMove(MachineState state, long timeout) {
+=======
+
+
+	for (int i = 0; i < node.grandchildren.size(); i++) {
+		double newscore = MPSelectFn(node.grandchildren.get(i));
+		if (newscore >= score) {
+			score = newscore;
+			result = node.grandchildren.get(i);
+		}
+	}
+	return MPSelect(result);
+	}
+
+	private MonteMPNode MPExpand(MonteMPNode node)
+			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+
 	}
 
 
-	MaxNode MProot = null;
-	private Move bestMove(MachineState state, long timeout) {
+	private double MPSelectFn(MonteMPNode node) {
+		// TODO Auto-generated method stub
+		if (node.isMax) {
+
+		} else {
+
+		}
+	}
+
+	private Move bestMove(MachineState state, long timeout)
+			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
+>>>>>>> 937eeaf12aa98b02c75730eb85db229107c8ae6a
 		long start = System.currentTimeMillis();
 		Move selection = null;
+
 		if (MProot == null) {
 			MProot = new MaxNode(state, null);
 		}
@@ -134,7 +188,7 @@ public class MorganTreeman extends StateMachineGamer {
 	}
 
 
-	MonteNode Sproot = null;
+
 	private Move bestSPMove(MachineState state, long timeout)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		long start  = System.currentTimeMillis();
@@ -224,7 +278,6 @@ public class MorganTreeman extends StateMachineGamer {
 	}
 
 
-
 	private int SPSimulate(MachineState state)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		StateMachine machine = getStateMachine();
@@ -296,10 +349,20 @@ public class MorganTreeman extends StateMachineGamer {
 		}
 	}
 
+
+
 	private class MonteMPNode {
 		MonteMPNode parent = null;
 		double utility = 0;
+<<<<<<< HEAD
 		double visits = 0;
+=======
+		double visit = 0;
+		MachineState current = null;
+		MonteMPNode parent = null;
+		Boolean isMax;
+		ArrayList<MonteMPNode> grandchildren;
+>>>>>>> 937eeaf12aa98b02c75730eb85db229107c8ae6a
 
 		private MonteMPNode(MonteMPNode parent) {
 			this.parent = parent;
@@ -320,8 +383,16 @@ public class MorganTreeman extends StateMachineGamer {
 		private MaxNode(MachineState state, MonteMPNode parent) {
 			super(parent);
 			current = state;
+<<<<<<< HEAD
+=======
+			isMax = max;
+			grandchildren = new ArrayList<MonteMPNode>();
+>>>>>>> 937eeaf12aa98b02c75730eb85db229107c8ae6a
 		}
 
 	}
+
+	MonteNode Sproot = null;
+	MonteMPNode MProot = null;
 
 }
