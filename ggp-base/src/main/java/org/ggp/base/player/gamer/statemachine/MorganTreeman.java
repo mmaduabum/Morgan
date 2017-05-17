@@ -166,7 +166,21 @@ public class MorganTreeman extends StateMachineGamer {
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		long start = System.currentTimeMillis();
 		Move selection = null;
-		MProot = new MaxNode(state, null); //not caching
+		if (MProot == null) {
+			MProot = new MaxNode(state, null);
+		} else {
+			MaxNode newRoot = new MaxNode(state, null);
+			for (MinNode min : MProot.children) {
+				for (MaxNode max : min.children) {
+					if (max.current.equals(state) && newRoot.visits < max.visits) {
+						System.out.println("found an equal state");
+						newRoot = max;
+					}
+				}
+			}
+			newRoot.parent = null;
+			MProot = newRoot;
+		}
 		while (start + 2000 < timeout) {
 			MaxNode node  = MPSelect(MProot);
 			MaxNode expandNode = MPExpand(node);
@@ -345,7 +359,6 @@ public class MorganTreeman extends StateMachineGamer {
 
 		}
 	}
-
 
 
 	private class MonteMPNode {
