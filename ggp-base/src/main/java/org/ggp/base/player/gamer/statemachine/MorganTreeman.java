@@ -26,7 +26,7 @@ public class MorganTreeman extends StateMachineGamer {
 	public StateMachine getInitialStateMachine() {
 //		return new SamplePropNetStateMachine();
 		machine =  new CachedStateMachine(new ProverStateMachine());
-		propnet = new SamplePropNetStateMachine();
+
 		return machine;
 	}
 
@@ -40,9 +40,15 @@ public class MorganTreeman extends StateMachineGamer {
 	public void stateMachineMetaGame(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
 //		StateMachine machine = getStateMachine();
+		System.out.println("here");
+		propnet = new SamplePropNetStateMachine();
 		propnet.initialize(getMatch().getGame().getRules());
+		System.out.println("initialized");
 
-
+		long start = System.currentTimeMillis();
+		while (start + 10000 < timeout) {
+			start = System.currentTimeMillis();
+		}
 		// TODO Auto-generated method stub
 	}
 
@@ -116,30 +122,96 @@ public class MorganTreeman extends StateMachineGamer {
 		}
 	}
 
-	private MaxNode MPExpand(MaxNode node) {
+	private MaxNode MPExpand(MaxNode node) throws MoveDefinitionException, TransitionDefinitionException {
 		StateMachine machine = getStateMachine();
 		if (machine.findTerminalp(node.current)) {
 			return node;
 		}
-		return node;
+		List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
+		int amount_of_min_nodes = node.children.size();
+		MinNode ExpandedMin;
+		if (amount_of_min_nodes == 0) { //makes sure at leas one min node in list
+			ExpandedMin = new MinNode(node, moves.get(0));
+			node.children.add(ExpandedMin);
+			amount_of_min_nodes = 1;
+		}
+		ExpandedMin = node.children.get(amount_of_min_nodes - 1);
+		if (ExpandedMin.hasAllChildren) { //make new min node and add grandchild
+			ExpandedMin = new MinNode(node, moves.get(amount_of_min_nodes)); //not -1 because new min node and index starts at 0
+			node.children.add(ExpandedMin);
+		} else {
+			ExpandedMin = node.children.get(amount_of_min_nodes - 1);
+		}
+		//now add grandchild
+		List<List<Move>> jointmoves = getStateMachine().getLegalJointMoves(node.current, getRole(), ExpandedMin.moveTo);
+		List<Move> jmove = jointmoves.get(ExpandedMin.children.size());
+		MachineState newState = machine.getNextState(node.current, jmove);
+		MaxNode newestGrandChild = new MaxNode(newState, ExpandedMin);
+		ExpandedMin.children.add(newestGrandChild);
+		if (ExpandedMin.children.size() == jointmoves.size()) {
+			ExpandedMin.hasAllChildren = true;
+			if (node.children.size() == moves.size()) {
+				node.hasAllGrandChildren = true;
+			}
+		}
+		return newestGrandChild;
+	}
+
+
+	private Double MPSimulate(MachineState state) throws GoalDefinitionException, MoveDefinitionException, TransitionDefinitionException {
+		StateMachine machine = getStateMachine();
+		if (machine.findTerminalp(state)) {
+			return (double) machine.findReward(getRole(), state);
+		}
+		List< List<Move> > jointmoves = machine.getLegalJointMoves(state);
+		Random rand = new Random();
+		int n = rand.nextInt(jointmoves.size());
+		return MPSimulate(machine.getNextState(state, jointmoves.get(n)));
+	}
+
+	private void MPBackpropagate(MonteMPNode node, double reward) {
+		node.visits += 1;
+		node.utility += reward;
+		if (node.parent != null) {
+			MPBackpropagate(node.parent, reward);
+		}
+
 	}
 
 	private Move bestMove(MachineState state, long timeout)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		long start = System.currentTimeMillis();
 		Move selection = null;
-
 		if (MProot == null) {
 			MProot = new MaxNode(state, null);
+		} else {
+			MaxNode newRoot = new MaxNode(state, null);
+			for (MinNode min : MProot.children) {
+				for (MaxNode max : min.children) {
+					if (max.current.equals(state) && newRoot.visits < max.visits) {
+						System.out.println("found an equal state");
+						newRoot = max;
+					}
+				}
+			}
+			newRoot.parent = null;
+			MProot = newRoot;
 		}
 		while (start + 2000 < timeout) {
 			MaxNode node  = MPSelect(MProot);
 			MaxNode expandNode = MPExpand(node);
+			Double score = MPSimulate(expandNode.current);
+			MPBackpropagate(expandNode, score);
 			start = System.currentTimeMillis();
 		}
-
-
-		return null;
+		double high_score = 0;
+		for (MinNode x : MProot.children) {
+			if (x.utility/x.visits >= high_score) {
+				selection = x.moveTo;
+				high_score = x.utility/x.visits;
+			}
+		}
+		return selection;
 	}
 
 
@@ -185,8 +257,8 @@ public class MorganTreeman extends StateMachineGamer {
 	private MonteNode SPSelect(MonteNode node)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 
-		List<Move> moves2 = getStateMachine().getLegalMoves(node.current, getRole());
-		List<Move> moves = propnet.getLegalMoves(node.current, getRole());
+		List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
+//		List<Move> moves = propnet.getLegalMoves(node.current, getRole());
 
 //		System.out.println(moves);
 //		System.out.println(moves2);
@@ -215,9 +287,9 @@ public class MorganTreeman extends StateMachineGamer {
 
 	private MonteNode SPExpand(MonteNode node)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
-//		StateMachine machine = getStateMachine();
+		StateMachine machine = getStateMachine();
 
-		if (!propnet.findTerminalp(node.current)) {
+		if (!machine.findTerminalp(node.current)) {
 
 			List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
 			int existingChildren = node.children.size();
@@ -225,10 +297,10 @@ public class MorganTreeman extends StateMachineGamer {
 			ArrayList<Move> new_moves = new ArrayList<Move>();
 			new_moves.add(move);
 			MachineState nextState = machine.getNextState(node.current, new_moves);
-			MachineState nextState2 = propnet.getNextState(node.current, new_moves);
+//			MachineState nextState2 = propnet.getNextState(node.current, new_moves);
 //			System.out.println(nextState);
 //			System.out.println(nextState2);
-			MonteNode newNode = new MonteNode(nextState2);
+			MonteNode newNode = new MonteNode(nextState);
 			newNode.parent = node;
 			node.children.add(newNode);
 			newNode.moveTo = move;
@@ -243,27 +315,35 @@ public class MorganTreeman extends StateMachineGamer {
 
 	private int SPSimulate(MachineState state)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
-//		StateMachine machine = getStateMachine();
+		StateMachine machine = getStateMachine();
 //		System.out.println(state);
 //		System.out.println("reward is " + propnet.findReward(getRole(), state) );
-		if (propnet.findTerminalp(state)) {
-			System.out.println(state);
-			System.out.println("found terminal");
-//			System.out.println("reward is " + propnet.findReward(getRole(), state) );
-			return propnet.findReward(getRole(), state);
+//		if (propnet.findTerminalp(state)) {
+//			System.out.println(state);
+//			System.out.println("found terminal");
+////			System.out.println("reward is " + propnet.findReward(getRole(), state) );
+//			return propnet.findReward(getRole(), state);
+//
+//		}
+		if (machine.findTerminalp(state)) {
+//		System.out.println(state);
+//		System.out.println("found terminal");
+//		System.out.println("reward is " + propnet.findReward(getRole(), state) );
+		return machine.findReward(getRole(), state);
 
-		}
+	}
+
 //		System.out.println("not found terminal");
 		List<Role> roles = new ArrayList<Role>(machine.getRoles());
 		int numRoles = roles.size();
 		ArrayList<Move> moveSet = new ArrayList<Move>(numRoles);
-		List<Move> moves = propnet.getLegalMoves(state, getRole());
+		List<Move> moves = machine.getLegalMoves(state, getRole());
 		Random rand = new Random();
 		int n = rand.nextInt(moves.size());
 		Move best = moves.get(n);
 		moveSet.add(best);
 
-		MachineState newState = propnet.getNextState(state, moveSet);
+		MachineState newState = machine.getNextState(state, moveSet);
 		return SPSimulate(newState);
 
 	}
@@ -320,11 +400,9 @@ public class MorganTreeman extends StateMachineGamer {
 	}
 
 
-
 	private class MonteMPNode {
 		MonteMPNode parent = null;
 		double utility = 0;
-
 		double visits = 0;
 
 
@@ -334,15 +412,18 @@ public class MorganTreeman extends StateMachineGamer {
 	}
 
 	private class MinNode extends MonteMPNode {
-		ArrayList<MaxNode> children;
-		private MinNode(MonteMPNode parent) {
+		ArrayList<MaxNode> children = new ArrayList<MaxNode>();
+		Boolean hasAllChildren = false;
+		Move moveTo;
+		private MinNode(MonteMPNode parent, Move moveT) {
 			super(parent);
+			moveTo = moveT;
 		}
 	}
 
 	private class MaxNode extends MonteMPNode {
 		Boolean hasAllGrandChildren = false;
-		ArrayList<MinNode> children;
+		ArrayList<MinNode> children = new ArrayList<MinNode>();;
 		MachineState current = null;
 		private MaxNode(MachineState state, MonteMPNode parent) {
 			super(parent);
