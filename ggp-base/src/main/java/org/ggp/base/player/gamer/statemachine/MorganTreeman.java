@@ -17,14 +17,19 @@ import org.ggp.base.util.statemachine.cache.CachedStateMachine;
 import org.ggp.base.util.statemachine.exceptions.GoalDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
+import org.ggp.base.util.statemachine.implementation.propnet.SamplePropNetStateMachine;
 import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 
 public class MorganTreeman extends StateMachineGamer {
 
 	@Override
 	public StateMachine getInitialStateMachine() {
-		return new CachedStateMachine(new ProverStateMachine());
+//		return new SamplePropNetStateMachine();
+		machine =  new CachedStateMachine(new ProverStateMachine());
+
+		return machine;
 	}
+
 
 	@Override
 	public DetailPanel getDetailPanel() {
@@ -34,6 +39,16 @@ public class MorganTreeman extends StateMachineGamer {
 	@Override
 	public void stateMachineMetaGame(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
+//		StateMachine machine = getStateMachine();
+		System.out.println("here");
+		propnet = new SamplePropNetStateMachine();
+		propnet.initialize(getMatch().getGame().getRules());
+		System.out.println("initialized");
+
+//		long start = System.currentTimeMillis();
+//		while (start + 10000 < timeout) {
+//			start = System.currentTimeMillis();
+//		}
 		// TODO Auto-generated method stub
 	}
 
@@ -51,7 +66,7 @@ public class MorganTreeman extends StateMachineGamer {
 		if (getStateMachine().findRoles().size() == 1) {
 			selection = bestSPMove(getCurrentState(), timeout);
 		} else {
-			selection = bestMove(getCurrentState(), timeout);
+			selection = bestMove(propnet.getInitialState(), timeout);
 		}
 
 		long stop = System.currentTimeMillis();
@@ -160,6 +175,7 @@ public class MorganTreeman extends StateMachineGamer {
 		if (node.parent != null) {
 			MPBackpropagate(node.parent, reward);
 		}
+
 	}
 
 	private Move bestMove(MachineState state, long timeout)
@@ -238,14 +254,19 @@ public class MorganTreeman extends StateMachineGamer {
 		}
 		newRoot.parent = null;
 		Sproot = newRoot;
-
+//		machine.getMachineStateFromSentenceList(sentenceList)
 		return selection;
 
 	}
 
 	private MonteNode SPSelect(MonteNode node)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
-		List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
+
+//		List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
+		List<Move> moves = propnet.getLegalMoves(node.current, getRole());
+
+//		System.out.println(moves);
+//		System.out.println(moves2);
 		if (node.children.size() < moves.size() || node.visit == 0) {
 			return node;
 		}
@@ -280,7 +301,10 @@ public class MorganTreeman extends StateMachineGamer {
 			Move move = moves.get(existingChildren);
 			ArrayList<Move> new_moves = new ArrayList<Move>();
 			new_moves.add(move);
-			MachineState nextState = machine.getNextState(node.current, new_moves);
+//			MachineState nextState = machine.getNextState(node.current, new_moves);
+			MachineState nextState = propnet.getNextState(node.current, new_moves);
+//			System.out.println(nextState);
+//			System.out.println(nextState2);
 			MonteNode newNode = new MonteNode(nextState);
 			newNode.parent = node;
 			node.children.add(newNode);
@@ -297,19 +321,34 @@ public class MorganTreeman extends StateMachineGamer {
 	private int SPSimulate(MachineState state)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		StateMachine machine = getStateMachine();
-		if (machine.findTerminalp(state)) {
-			return machine.findReward(getRole(), state);
+		System.out.println(state);
+		System.out.println("reward is " + propnet.findReward(getRole(), state) );
+		if (propnet.findTerminalp(state)) {
+			System.out.println(state);
+			System.out.println("found terminal");
+//			System.out.println("reward is " + propnet.findReward(getRole(), state) );
+			return propnet.findReward(getRole(), state);
+
 		}
+//		if (machine.findTerminalp(state)) {
+////		System.out.println(state);
+////		System.out.println("found terminal");
+////		System.out.println("reward is " + propnet.findReward(getRole(), state) );
+//		return machine.findReward(getRole(), state);
+//
+//		}
+
+//		System.out.println("not found terminal");
 		List<Role> roles = new ArrayList<Role>(machine.getRoles());
 		int numRoles = roles.size();
 		ArrayList<Move> moveSet = new ArrayList<Move>(numRoles);
-		List<Move> moves = machine.getLegalMoves(state, getRole());
+		List<Move> moves = propnet.getLegalMoves(state, getRole());
 		Random rand = new Random();
 		int n = rand.nextInt(moves.size());
 		Move best = moves.get(n);
 		moveSet.add(best);
 
-		MachineState newState = machine.getNextState(state, moveSet);
+		MachineState newState = propnet.getNextState(state, moveSet);
 		return SPSimulate(newState);
 
 	}
@@ -401,5 +440,8 @@ public class MorganTreeman extends StateMachineGamer {
 
 	MonteNode Sproot = null;
 	MaxNode MProot = null;
+	StateMachine machine;
+	SamplePropNetStateMachine propnet;
+
 
 }
