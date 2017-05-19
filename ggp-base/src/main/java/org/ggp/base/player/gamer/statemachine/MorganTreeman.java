@@ -173,7 +173,6 @@ public class MorganTreeman extends StateMachineGamer {
 			for (MinNode min : MProot.children) {
 				for (MaxNode max : min.children) {
 					if (max.current.equals(state) && newRoot.visits < max.visits) {
-						System.out.println("found an equal state");
 						newRoot = max;
 					}
 				}
@@ -181,14 +180,17 @@ public class MorganTreeman extends StateMachineGamer {
 			newRoot.parent = null;
 			MProot = newRoot;
 		}
+		double count = 0;
 		while (start + 2000 < timeout) {
 			MaxNode node  = MPSelect(MProot);
 			MaxNode expandNode = MPExpand(node);
 			Double score = MPSimulate(expandNode.current);
+			count++;
 			MPBackpropagate(expandNode, score);
 			start = System.currentTimeMillis();
 		}
 		double high_score = 0;
+		System.out.println("number of depth charges: " + count);
 		for (MinNode x : MProot.children) {
 			if (x.utility/x.visits >= high_score) {
 				selection = x.moveTo;
@@ -208,11 +210,13 @@ public class MorganTreeman extends StateMachineGamer {
 			Sproot = new MonteNode(state);
 		}
 		Move selection = null;
+		double count = 0;
 		while (start + 2000 < timeout) {
 
 			MonteNode node = SPSelect(Sproot);
 			MonteNode child = SPExpand(node);
 			double reward = SPSimulate(child.current);
+			count++;
 			SPBackpropagate(reward, child);
 
 
@@ -221,6 +225,7 @@ public class MorganTreeman extends StateMachineGamer {
 		double high_score = 0;
 		MonteNode newRoot = null;
 		System.out.println("...");
+		System.out.println("number of depth charges: " + count);
 		for (MonteNode child : Sproot.children) {
 			System.out.println("move to this child: " + child.moveTo);
 			System.out.println("utility: " + child.utility);
