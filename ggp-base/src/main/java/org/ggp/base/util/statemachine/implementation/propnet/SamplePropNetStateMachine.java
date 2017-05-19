@@ -85,31 +85,34 @@ public class SamplePropNetStateMachine extends StateMachine {
 //    	System.out.println(pee);
     	boolean result = false;
     	if (this.propNet.getBasePropositions().containsValue(pee)) {
-//    		System.out.println("base");
+
     		result = pee.getValue();
     	} else if (this.propNet.getInputPropositions().containsValue(pee)) {
-//    		System.out.println("input");
+
     		result = pee.getValue();
     	} else if (pee instanceof Not) {
-//    		System.out.println("not");
+
     		result = propmarkNegation(pee);
     	} else if (pee instanceof And) {
-//    		System.out.println("and");
+
     		result = propmarkConjunction(pee);
     	} else if (pee instanceof Or) {
-//    		System.out.println("or");
+
     		result = propmarkDisjunction(pee);
     	} else if (pee instanceof Constant) {
-//    		System.out.println("constant");
+
     		result = pee.getValue();
+
     	} else if (pee instanceof Transition) {
+
     		result = propmarkp(pee.getSingleInput());
+
     	} else {
 	    	if (pee.getInputs().size() > 0) {
-//	    		System.out.println("single");
+
 	    		result = propmarkp(pee.getSingleInput());
 	    	} else {
-//	    		System.out.println("other");
+	    		System.out.println("ERROR: view prop without 0 input");
 	    		result = pee.getValue();
 	    	}
 
@@ -277,8 +280,15 @@ public class SamplePropNetStateMachine extends StateMachine {
      */
     @Override
     public MachineState getInitialState() {
-        // TODO: Compute the initial state.
-        return null;
+    	GdlSentence initial = this.propNet.getInitProposition().getName();
+    	for (GdlSentence key : this.propNet.getBasePropositions().keySet()) {
+    		if (key.equals(initial)) {
+    			this.propNet.getBasePropositions().get(key).setValue(true);
+    		} else {
+    			this.propNet.getBasePropositions().get(key).setValue(false);
+    		}
+    	}
+    	return getStateFromBase();
     }
 
     /**
