@@ -85,6 +85,7 @@ public class SamplePropNetStateMachine extends StateMachine {
 //    	System.out.println(pee);
     	boolean result = false;
     	if (this.propNet.getBasePropositions().containsValue(pee)) {
+    		System.out.println("I'm called");
 
     		result = pee.getValue();
     	} else if (this.propNet.getInputPropositions().containsValue(pee)) {
