@@ -75,46 +75,37 @@ public class SamplePropNetStateMachine extends StateMachine {
     	}
     }
 
-    private void clearBases(List<GdlSentence> marks) {
+    private void clearBases() {
     	for (GdlSentence key : this.propNet.getBasePropositions().keySet()) {
 			this.propNet.getBasePropositions().get(key).setValue(false);
     	}
     }
 
-    private boolean propmarkp(Component pee) {
-//    	System.out.println(pee);
+    private boolean propmarkp(Component pi) {
+//    	System.out.println(pi);
     	boolean result = false;
-    	if (this.propNet.getBasePropositions().containsValue(pee)) {
-    		System.out.println("I'm called");
-
-    		result = pee.getValue();
-    	} else if (this.propNet.getInputPropositions().containsValue(pee)) {
-
-    		result = pee.getValue();
-    	} else if (pee instanceof Not) {
-
-    		result = propmarkNegation(pee);
-    	} else if (pee instanceof And) {
-
-    		result = propmarkConjunction(pee);
-    	} else if (pee instanceof Or) {
-
-    		result = propmarkDisjunction(pee);
-    	} else if (pee instanceof Constant) {
-
-    		result = pee.getValue();
-
-    	} else if (pee instanceof Transition) {
-
-    		result = propmarkp(pee.getSingleInput());
-
+    	if (this.propNet.getBasePropositions().containsValue(pi)) {
+    		result = pi.getValue();
+    	} else if (pi.equals(this.propNet.getInitProposition())) {
+    		result = pi.getValue();
+    	} else if (this.propNet.getInputPropositions().containsValue(pi)) {
+    		result = pi.getValue();
+    	} else if (pi instanceof Not) {
+    		result = propmarkNegation(pi);
+    	} else if (pi instanceof And) {
+    		result = propmarkConjunction(pi);
+    	} else if (pi instanceof Or) {
+    		result = propmarkDisjunction(pi);
+    	} else if (pi instanceof Constant) {
+    		result = pi.getValue();
+    	} else if (pi instanceof Transition) {
+    		result = propmarkp(pi.getSingleInput());
     	} else {
-	    	if (pee.getInputs().size() > 0) {
-
-	    		result = propmarkp(pee.getSingleInput());
+	    	if (pi.getInputs().size() > 0) {
+	    		result = propmarkp(pi.getSingleInput());
 	    	} else {
 	    		System.out.println("ERROR: view prop without 0 input");
-	    		result = pee.getValue();
+	    		result = pi.getValue();
 	    	}
 
     	}
@@ -148,6 +139,7 @@ public class SamplePropNetStateMachine extends StateMachine {
     }
     @Override
     public List<Move> getLegalMoves(MachineState state, Role role) {
+    	clearBases();
     	List<GdlSentence> marks = new ArrayList(state.getContents());
     	markBases(marks);
     	//List<Role> roles = this.propNet.getRoles();
@@ -172,6 +164,7 @@ public class SamplePropNetStateMachine extends StateMachine {
     @Override
     public MachineState getNextState(MachineState state, List<Move> moves)
             throws TransitionDefinitionException {
+    	clearBases();
         List<GdlSentence> actions = toDoes(moves);
         markActions(actions);
     	List<GdlSentence> marks = new ArrayList(state.getContents());
@@ -187,7 +180,6 @@ public class SamplePropNetStateMachine extends StateMachine {
 
     	}
     	MachineState newState = new MachineState(contents);
-//    	return getStateFromBase();
     	return newState;
 
     }
@@ -195,8 +187,7 @@ public class SamplePropNetStateMachine extends StateMachine {
     public MachineState getStateFromBase()
     {
         Set<GdlSentence> contents = new HashSet<GdlSentence>();
-        for (Proposition p : propNet.getBasePropositions().values())
-        {
+        for (Proposition p : propNet.getBasePropositions().values()) {
             p.setValue(p.getSingleInput().getValue());
             if (p.getValue())
             {
@@ -204,7 +195,7 @@ public class SamplePropNetStateMachine extends StateMachine {
             }
 
         }
-        System.out.println(contents);
+        //System.out.println(contents);
         return new MachineState(contents);
     }
 
@@ -264,7 +255,7 @@ public class SamplePropNetStateMachine extends StateMachine {
     @Override
     public int getGoal(MachineState state, Role role)
             throws GoalDefinitionException {
-    	System.out.println("calling get goal");
+    	//System.out.println("calling get goal");
     	Set<Proposition> gprops = this.propNet.getGoalPropositions().get(role);
     	for (Proposition pee : gprops) {
     		if (propmarkp(pee)) {
@@ -281,15 +272,16 @@ public class SamplePropNetStateMachine extends StateMachine {
      */
     @Override
     public MachineState getInitialState() {
-    	GdlSentence initial = this.propNet.getInitProposition().getName();
-    	for (GdlSentence key : this.propNet.getBasePropositions().keySet()) {
-    		if (key.equals(initial)) {
-    			this.propNet.getBasePropositions().get(key).setValue(true);
-    		} else {
-    			this.propNet.getBasePropositions().get(key).setValue(false);
-    		}
+    	for (Proposition val : this.propNet.getBasePropositions().values()) {
+    		val.setValue(false);
     	}
-    	return getStateFromBase();
+    	for (Proposition val  : this.propNet.getInputPropositions().values()) {
+    		val.setValue(false);
+    	}
+    	this.propNet.getInitProposition().setValue(true);
+    	MachineState b = getStateFromBase();
+    	this.propNet.getInitProposition().setValue(false);
+    	return b;
     }
 
     /**
