@@ -79,6 +79,9 @@ public class SamplePropNetStateMachine extends StateMachine {
     	for (GdlSentence key : this.propNet.getBasePropositions().keySet()) {
 			this.propNet.getBasePropositions().get(key).setValue(false);
     	}
+    	for (GdlSentence key : this.propNet.getInputPropositions().keySet()) {
+    		this.propNet.getInputPropositions().get(key).setValue(false);
+    	}
     }
 
     private boolean propmarkp(Component pi) {
@@ -173,7 +176,7 @@ public class SamplePropNetStateMachine extends StateMachine {
     	for (Map.Entry<GdlSentence, Proposition> entry : this.propNet.getBasePropositions().entrySet()) {
     		Proposition p = entry.getValue();
     		boolean res = propmarkp(p.getSingleInput().getSingleInput());
-    		this.propNet.getBasePropositions().get(entry.getKey()).setValue(res);
+//    		this.propNet.getBasePropositions().get(entry.getKey()).setValue(res);
     		if (res) {
     			contents.add(p.getName());
     		}
@@ -219,6 +222,7 @@ public class SamplePropNetStateMachine extends StateMachine {
     @Override
 	public int findReward(Role role, MachineState state) throws GoalDefinitionException {
     	List<GdlSentence> marks = new ArrayList(state.getContents());
+    	clearBases();
     	markBases(marks);
     	Set<Proposition> gprops = this.propNet.getGoalPropositions().get(role);
     	for (Proposition pee : gprops) {
@@ -226,6 +230,7 @@ public class SamplePropNetStateMachine extends StateMachine {
     			return getGoalValue(pee);
     		}
     	}
+    	System.out.println("reached return in findReward");
     	return 0;
     }
 
@@ -240,6 +245,7 @@ public class SamplePropNetStateMachine extends StateMachine {
     @Override
     public boolean isTerminal(MachineState state) {
     	List<GdlSentence> marks = new ArrayList(state.getContents());
+    	clearBases();
     	markBases(marks);
 //    	System.out.println(propNet.getTerminalProposition().getValue());
         return propmarkp(propNet.getTerminalProposition());
@@ -256,12 +262,15 @@ public class SamplePropNetStateMachine extends StateMachine {
     public int getGoal(MachineState state, Role role)
             throws GoalDefinitionException {
     	//System.out.println("calling get goal");
+    	clearBases();
+//    	markBases(state.getContents());
     	Set<Proposition> gprops = this.propNet.getGoalPropositions().get(role);
     	for (Proposition pee : gprops) {
     		if (propmarkp(pee)) {
     			return getGoalValue(pee);
     		}
     	}
+    	System.out.println("reached return in getGoal");
         return 0;
     }
 

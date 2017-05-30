@@ -292,7 +292,7 @@ public class MorganTreeman extends StateMachineGamer {
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		StateMachine machine = getStateMachine();
 
-		if (!machine.findTerminalp(node.current)) {
+		if (!machine.isTerminal(node.current)) {
 
 			List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
 			int existingChildren = node.children.size();
@@ -321,10 +321,10 @@ public class MorganTreeman extends StateMachineGamer {
 		StateMachine machine = getStateMachine();
 //		System.out.println(state);
 //		System.out.println("reward is " + machine.findReward(getRole(), state) );
-		if (machine.findTerminalp(state)) {
+		if (machine.isTerminal(state)) {
 //			System.out.println(state);
 //			System.out.println("found terminal");
-//			System.out.println("reward is " + propnet.findReward(getRole(), state) );
+//			System.out.println("reward is " + machine.findReward(getRole(), state) );
 			return machine.findReward(getRole(), state);
 
 		}
