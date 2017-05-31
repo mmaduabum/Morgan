@@ -122,7 +122,7 @@ public class MorganTreeman extends StateMachineGamer {
 
 	private MaxNode MPExpand(MaxNode node) throws MoveDefinitionException, TransitionDefinitionException {
 		StateMachine machine = getStateMachine();
-		if (machine.findTerminalp(node.current)) {
+		if (machine.isTerminal(node.current)) {
 			return node;
 		}
 		List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
@@ -158,7 +158,7 @@ public class MorganTreeman extends StateMachineGamer {
 
 	private Double MPSimulate(MachineState state) throws GoalDefinitionException, MoveDefinitionException, TransitionDefinitionException {
 		StateMachine machine = getStateMachine();
-		if (machine.findTerminalp(state)) {
+		if (machine.isTerminal(state)) {
 			return (double) machine.findReward(getRole(), state);
 		}
 		List< List<Move> > jointmoves = machine.getLegalJointMoves(state);
