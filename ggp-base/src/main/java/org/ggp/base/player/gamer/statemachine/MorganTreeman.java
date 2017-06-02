@@ -13,18 +13,19 @@ import org.ggp.base.util.statemachine.MachineState;
 import org.ggp.base.util.statemachine.Move;
 import org.ggp.base.util.statemachine.Role;
 import org.ggp.base.util.statemachine.StateMachine;
+import org.ggp.base.util.statemachine.cache.CachedStateMachine;
 import org.ggp.base.util.statemachine.exceptions.GoalDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
-import org.ggp.base.util.statemachine.implementation.propnet.SamplePropNetStateMachine;
+import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 
 public class MorganTreeman extends StateMachineGamer {
 
 	@Override
 	public StateMachine getInitialStateMachine() {
 //		return new SamplePropNetStateMachine();
-		machine = new SamplePropNetStateMachine();
-
+		//machine = new SamplePropNetStateMachine();
+		machine = new CachedStateMachine(new ProverStateMachine());
 		return machine;
 	}
 
@@ -206,11 +207,20 @@ public class MorganTreeman extends StateMachineGamer {
 		double high_score = 0;
 		System.out.println("number of depth charges: " + count);
 		for (MinNode x : MProot.children) {
+			System.out.println("Move: " + x.moveTo);
+			System.out.println("Utility: " + x.utility);
+			System.out.println("Visits: " + x.visits);
+			System.out.println("Score: " + (x.utility / x.visits));
 			if (x.utility/x.visits >= high_score) {
 				selection = x.moveTo;
 				high_score = x.utility/x.visits;
 			}
 		}
+		for (Move m : machine.getLegalMoves(state, getRole())) {
+			System.out.println(m);
+		}
+		System.out.println("move is: " + selection );
+		System.out.println("...");
 		return selection;
 	}
 
