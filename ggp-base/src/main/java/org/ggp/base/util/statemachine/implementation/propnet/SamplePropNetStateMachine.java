@@ -142,13 +142,14 @@ public class SamplePropNetStateMachine extends StateMachine {
     }
     @Override
     public List<Move> getLegalMoves(MachineState state, Role role) {
+
     	clearBases();
     	List<GdlSentence> marks = new ArrayList(state.getContents());
     	markBases(marks);
     	//List<Role> roles = this.propNet.getRoles();
     	List<Proposition> actions = new ArrayList();
     	List<Move> moves = new ArrayList();
-//    	System.out.println(this.propNet.getLegalPropositions().size());
+
     	for (Proposition prop : this.propNet.getLegalPropositions().get(role)) {
     		if (propmarkp(prop)) {
 //    			System.out.println("found a move");
@@ -176,7 +177,6 @@ public class SamplePropNetStateMachine extends StateMachine {
     	for (Map.Entry<GdlSentence, Proposition> entry : this.propNet.getBasePropositions().entrySet()) {
     		Proposition p = entry.getValue();
     		boolean res = propmarkp(p.getSingleInput().getSingleInput());
-//    		this.propNet.getBasePropositions().get(entry.getKey()).setValue(res);
     		if (res) {
     			contents.add(p.getName());
     		}
@@ -261,19 +261,18 @@ public class SamplePropNetStateMachine extends StateMachine {
     @Override
     public int getGoal(MachineState state, Role role)
             throws GoalDefinitionException {
-    	//System.out.println("calling get goal");
+    	List<GdlSentence> marks = new ArrayList(state.getContents());
     	clearBases();
-//    	markBases(state.getContents());
+    	markBases(marks);
     	Set<Proposition> gprops = this.propNet.getGoalPropositions().get(role);
     	for (Proposition pee : gprops) {
     		if (propmarkp(pee)) {
     			return getGoalValue(pee);
     		}
     	}
-    	System.out.println("reached return in getGoal");
-        return 0;
+    	System.out.println("reached return in findReward");
+    	return 0;
     }
-
     /**
      * Returns the initial state. The initial state can be computed
      * by only setting the truth value of the INIT proposition to true,

@@ -13,10 +13,13 @@ import org.ggp.base.util.statemachine.MachineState;
 import org.ggp.base.util.statemachine.Move;
 import org.ggp.base.util.statemachine.Role;
 import org.ggp.base.util.statemachine.StateMachine;
+import org.ggp.base.util.statemachine.cache.CachedStateMachine;
 import org.ggp.base.util.statemachine.exceptions.GoalDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.base.util.statemachine.implementation.propnet.SamplePropNetStateMachine;
+import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
+import org.ggp.base.util.statemachine.verifier.StateMachineVerifier;
 
 public class MorganTreeman extends StateMachineGamer {
 
@@ -24,6 +27,10 @@ public class MorganTreeman extends StateMachineGamer {
 	public StateMachine getInitialStateMachine() {
 //		return new SamplePropNetStateMachine();
 		machine = new SamplePropNetStateMachine();
+		proverMachine = new CachedStateMachine(new ProverStateMachine());
+
+
+
 
 		return machine;
 	}
@@ -37,10 +44,15 @@ public class MorganTreeman extends StateMachineGamer {
 	@Override
 	public void stateMachineMetaGame(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
+
+
 //		StateMachine machine = getStateMachine();
 //		System.out.println("here");
 //		propnet = new SamplePropNetStateMachine();
-//		propnet.initialize(getMatch().getGame().getRules());
+		machine.initialize(getMatch().getGame().getRules());
+		proverMachine.initialize(getMatch().getGame().getRules());
+		StateMachineVerifier verify = new StateMachineVerifier();
+		verify.checkMachineConsistency(proverMachine, machine, timeout - 10000);
 //		System.out.println("initialized");
 
 //		long start = System.currentTimeMillis();
@@ -122,7 +134,7 @@ public class MorganTreeman extends StateMachineGamer {
 
 	private MaxNode MPExpand(MaxNode node) throws MoveDefinitionException, TransitionDefinitionException {
 		StateMachine machine = getStateMachine();
-		if (machine.findTerminalp(node.current)) {
+		if (machine.isTerminal(node.current)) {
 			return node;
 		}
 		List<Move> moves = getStateMachine().getLegalMoves(node.current, getRole());
@@ -158,7 +170,7 @@ public class MorganTreeman extends StateMachineGamer {
 
 	private Double MPSimulate(MachineState state) throws GoalDefinitionException, MoveDefinitionException, TransitionDefinitionException {
 		StateMachine machine = getStateMachine();
-		if (machine.findTerminalp(state)) {
+		if (machine.isTerminal(state)) {
 			return (double) machine.findReward(getRole(), state);
 		}
 		List< List<Move> > jointmoves = machine.getLegalJointMoves(state);
@@ -205,10 +217,14 @@ public class MorganTreeman extends StateMachineGamer {
 		}
 		double high_score = 0;
 		System.out.println("number of depth charges: " + count);
-		for (MinNode x : MProot.children) {
-			if (x.utility/x.visits >= high_score) {
-				selection = x.moveTo;
-				high_score = x.utility/x.visits;
+		for (MinNode child : MProot.children) {
+			System.out.println("move to this child: " + child.moveTo);
+			System.out.println("utility: " + child.utility);
+			System.out.println("visits: " + child.visits);
+			if (child.utility/child.visits >= high_score) {
+
+				selection = child.moveTo;
+				high_score = child.utility/child.visits;
 			}
 		}
 		return selection;
@@ -439,6 +455,7 @@ public class MorganTreeman extends StateMachineGamer {
 	MonteNode Sproot = null;
 	MaxNode MProot = null;
 	StateMachine machine;
+	StateMachine proverMachine;
 //	SamplePropNetStateMachine propnet;
 
 
