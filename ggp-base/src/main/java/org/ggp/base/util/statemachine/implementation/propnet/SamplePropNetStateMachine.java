@@ -55,6 +55,8 @@ public class SamplePropNetStateMachine extends StateMachine {
         }
     }
 
+
+
     private void markBases(List<GdlSentence> marks) {
     	for (GdlSentence key : this.propNet.getBasePropositions().keySet()) {
     		if (marks.contains(key)) {
@@ -121,8 +123,8 @@ public class SamplePropNetStateMachine extends StateMachine {
     }
 
 
-    private boolean propmarkConjunction(Component pee) {
-    	Set<Component> sources = pee.getInputs();
+    private boolean propmarkConjunction(Component p) {
+    	Set<Component> sources = p.getInputs();
     	for (Component source : sources) {
     		if (!propmarkp(source)) {
     			return false;
@@ -131,8 +133,8 @@ public class SamplePropNetStateMachine extends StateMachine {
     	return true;
     }
 
-    private boolean propmarkDisjunction(Component pee) {
-    	Set<Component> sources = pee.getInputs();
+    private boolean propmarkDisjunction(Component p) {
+    	Set<Component> sources = p.getInputs();
     	for (Component source : sources) {
     		if (propmarkp(source)) {
     			return true;
@@ -225,9 +227,9 @@ public class SamplePropNetStateMachine extends StateMachine {
     	clearBases();
     	markBases(marks);
     	Set<Proposition> gprops = this.propNet.getGoalPropositions().get(role);
-    	for (Proposition pee : gprops) {
-    		if (propmarkp(pee)) {
-    			return getGoalValue(pee);
+    	for (Proposition p : gprops) {
+    		if (propmarkp(p)) {
+    			return getGoalValue(p);
     		}
     	}
     	System.out.println("reached return in findReward");
@@ -265,9 +267,9 @@ public class SamplePropNetStateMachine extends StateMachine {
     	clearBases();
     	markBases(marks);
     	Set<Proposition> gprops = this.propNet.getGoalPropositions().get(role);
-    	for (Proposition pee : gprops) {
-    		if (propmarkp(pee)) {
-    			return getGoalValue(pee);
+    	for (Proposition p : gprops) {
+    		if (propmarkp(p)) {
+    			return getGoalValue(p);
     		}
     	}
     	System.out.println("reached return in findReward");

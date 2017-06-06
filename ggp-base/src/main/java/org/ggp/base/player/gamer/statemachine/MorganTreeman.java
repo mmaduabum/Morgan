@@ -19,7 +19,6 @@ import org.ggp.base.util.statemachine.cache.CachedStateMachine;
 import org.ggp.base.util.statemachine.exceptions.GoalDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
-import org.ggp.base.util.statemachine.implementation.propnet.SamplePropNetStateMachine;
 import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
 
 
@@ -31,8 +30,11 @@ public class MorganTreeman extends StateMachineGamer {
 	public StateMachine getInitialStateMachine() {
 //		return new SamplePropNetStateMachine();
 
-		machine = new SamplePropNetStateMachine();
-		proverMachine = new CachedStateMachine(new ProverStateMachine());
+		//machine = new SamplePropNetStateMachine();
+
+		//proverMachine = new CachedStateMachine(new ProverStateMachine());
+
+		machine = new CachedStateMachine(new ProverStateMachine());
 
 		return machine;
 	}
@@ -46,18 +48,12 @@ public class MorganTreeman extends StateMachineGamer {
 	@Override
 	public void stateMachineMetaGame(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
+		machine.initialize(getMatch().getGame().getRules()); //should this be here?
 
-		machine.initialize(getMatch().getGame().getRules());
-
-		/* THESE LINES ARE THE VERIFIER:
-		proverMachine.initialize(getMatch().getGame().getRules());
-		StateMachineVerifier verify = new StateMachineVerifier();
-		verify.checkMachineConsistency(proverMachine, machine, timeout - 10000);
-	`	*/
-//		while (start + 10000 < timeout) {
-//			start = System.currentTimeMillis();
-//		}
-
+		//THESE LINES ARE THE VERIFIER:
+		//proverMachine.initialize(getMatch().getGame().getRules());
+		//StateMachineVerifier verify = new StateMachineVerifier();
+		//verify.checkMachineConsistency(proverMachine, machine, 20000);
 	}
 
 	@Override
@@ -445,12 +441,16 @@ public class MorganTreeman extends StateMachineGamer {
 	@Override
 	public void stateMachineStop() {
 		// TODO Auto-generated method stub
+		Sproot = null;
+		MProot = null;
 
 	}
 
 	@Override
 	public void stateMachineAbort() {
 		// TODO Auto-generated method stub
+		Sproot = null;
+		MProot = null;
 
 	}
 
