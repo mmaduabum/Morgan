@@ -57,9 +57,9 @@ public class MorganTreeman extends StateMachineGamer {
 		long start = System.currentTimeMillis();
 		machine.initialize(getMatch().getGame().getRules());
 		if (getStateMachine().findRoles().size() == 1) {
-			//bestSPMove(getCurrentState(), timeout - 1000);
+			bestSPMove(getCurrentState(), timeout - 1000, true);
 		} else {
-			//bestMove(getCurrentState(), timeout - 1000);
+			bestMove(getCurrentState(), timeout - 1000);
 		}
 	}
 
@@ -75,7 +75,7 @@ public class MorganTreeman extends StateMachineGamer {
 		List<Move> moves = getStateMachine().getLegalMoves(getCurrentState(), getRole());
 
 		if (getStateMachine().findRoles().size() == 1) {
-			selection = bestSPMove(getCurrentState(), timeout);
+			selection = bestSPMove(getCurrentState(), timeout, false);
 		} else {
 			selection = bestMove(getCurrentState(), timeout);
 		}
@@ -251,7 +251,8 @@ public class MorganTreeman extends StateMachineGamer {
 		Move selection = null;
 		if (MProot == null) {
 			MProot = new MaxNode(state, null);
-		} else {
+		} else if (!MProot.current.equals(state)) {
+			System.out.println("not first move");
 			MaxNode newRoot = new MaxNode(state, null);
 			for (MinNode min : MProot.children) {
 				for (MaxNode max : min.children) {
@@ -303,7 +304,7 @@ public class MorganTreeman extends StateMachineGamer {
 	}
 
 
-	private Move bestSPMove(MachineState state, long timeout)
+	private Move bestSPMove(MachineState state, long timeout, boolean meta)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		long start  = System.currentTimeMillis();
 
@@ -337,8 +338,10 @@ public class MorganTreeman extends StateMachineGamer {
 				high_score = (child.utility/child.visit);
 			}
 		}
-		newRoot.parent = null;
-		Sproot = newRoot;
+		if (!meta) {
+			newRoot.parent = null;
+			Sproot = newRoot;
+		}
 //		machine.getMachineStateFromSentenceList(sentenceList)
 		return selection;
 
