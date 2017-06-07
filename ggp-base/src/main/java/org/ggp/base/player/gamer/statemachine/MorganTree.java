@@ -23,8 +23,6 @@ public class MorganTree extends StateMachineGamer {
 
 	@Override
 	public StateMachine getInitialStateMachine() {
-//		return new SamplePropNetStateMachine();
-		//machine = new SamplePropNetStateMachine();
 		machine = new CachedStateMachine(new ProverStateMachine());
 		return machine;
 	}
@@ -38,23 +36,12 @@ public class MorganTree extends StateMachineGamer {
 	@Override
 	public void stateMachineMetaGame(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
-//		StateMachine machine = getStateMachine();
-//		System.out.println("here");
-//		propnet = new SamplePropNetStateMachine();
-//		propnet.initialize(getMatch().getGame().getRules());
-//		System.out.println("initialized");
 
-//		long start = System.currentTimeMillis();
-//		while (start + 10000 < timeout) {
-//			start = System.currentTimeMillis();
-//		}
-		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public Move stateMachineSelectMove(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
-		//
 		StateMachine machine = getStateMachine();
 		long start = System.currentTimeMillis();
 		Move selection = null;
@@ -65,7 +52,7 @@ public class MorganTree extends StateMachineGamer {
 		if (getStateMachine().findRoles().size() == 1) {
 			selection = bestSPMove(getCurrentState(), timeout);
 		} else {
-			selection = bestMove(machine.getInitialState(), timeout);
+			selection = bestMove(getCurrentState(), timeout);
 		}
 
 		long stop = System.currentTimeMillis();
@@ -338,15 +325,6 @@ public class MorganTree extends StateMachineGamer {
 			return machine.findReward(getRole(), state);
 
 		}
-//		if (machine.findTerminalp(state)) {
-////		System.out.println(state);
-////		System.out.println("found terminal");
-////		System.out.println("reward is " + propnet.findReward(getRole(), state) );
-//		return machine.findReward(getRole(), state);
-//
-//		}
-
-//		System.out.println("not found terminal");
 		List<Role> roles = new ArrayList<Role>(machine.getRoles());
 		int numRoles = roles.size();
 		ArrayList<Move> moveSet = new ArrayList<Move>(numRoles);
@@ -449,7 +427,6 @@ public class MorganTree extends StateMachineGamer {
 	MonteNode Sproot = null;
 	MaxNode MProot = null;
 	StateMachine machine;
-//	SamplePropNetStateMachine propnet;
 
 
 }

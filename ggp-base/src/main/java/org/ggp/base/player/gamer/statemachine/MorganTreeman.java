@@ -48,12 +48,19 @@ public class MorganTreeman extends StateMachineGamer {
 	@Override
 	public void stateMachineMetaGame(long timeout)
 			throws TransitionDefinitionException, MoveDefinitionException, GoalDefinitionException {
-		machine.initialize(getMatch().getGame().getRules()); //should this be here?
+		//machine.initialize(getMatch().getGame().getRules()); //should this be here?
 
 		//THESE LINES ARE THE VERIFIER:
 		//proverMachine.initialize(getMatch().getGame().getRules());
 		//StateMachineVerifier verify = new StateMachineVerifier();
 		//verify.checkMachineConsistency(proverMachine, machine, 20000);
+		long start = System.currentTimeMillis();
+		machine.initialize(getMatch().getGame().getRules());
+		if (getStateMachine().findRoles().size() == 1) {
+			//bestSPMove(getCurrentState(), timeout - 1000);
+		} else {
+			//bestMove(getCurrentState(), timeout - 1000);
+		}
 	}
 
 	@Override
@@ -85,7 +92,7 @@ public class MorganTreeman extends StateMachineGamer {
 	private MaxNode MPSelect(MaxNode node) {
 		if (node.fullyExpanded || machine.isTerminal(node.current)) {
 			if (!machine.isTerminal(node.current)) {
-				System.out.println("solving tree!");
+				//System.out.println("solving tree!");
 			}
 			return node;
 		}
@@ -257,7 +264,7 @@ public class MorganTreeman extends StateMachineGamer {
 			MProot = newRoot;
 		}
 		double count = 0;
-		while (start + 2000 < timeout) {
+		while (start + timeBuffer < timeout) {
 			MaxNode node = MPSelect(MProot);
 			MaxNode expandNode = MPExpand(node);
 			int score = 0;
@@ -272,7 +279,10 @@ public class MorganTreeman extends StateMachineGamer {
 		}
 		double high_score = 0;
 		System.out.println("number of depth charges: " + count);
-
+		if (System.currentTimeMillis() + 1500 > timeout) {
+			timeBuffer = 3000;
+			System.out.println("Give me more time");
+		}
 		for (MinNode x : MProot.children) {
 			System.out.println("Move: " + x.moveTo);
 			System.out.println("Utility: " + x.utility);
@@ -293,7 +303,6 @@ public class MorganTreeman extends StateMachineGamer {
 	}
 
 
-
 	private Move bestSPMove(MachineState state, long timeout)
 			throws TransitionDefinitionException, GoalDefinitionException, MoveDefinitionException {
 		long start  = System.currentTimeMillis();
@@ -303,7 +312,7 @@ public class MorganTreeman extends StateMachineGamer {
 		}
 		Move selection = null;
 		double count = 0;
-		while (start + 2000 < timeout) {
+		while (start + timeBuffer < timeout) {
 
 			MonteNode node = SPSelect(Sproot);
 			MonteNode child = SPExpand(node);
@@ -443,6 +452,7 @@ public class MorganTreeman extends StateMachineGamer {
 		// TODO Auto-generated method stub
 		Sproot = null;
 		MProot = null;
+		timeBuffer = 2000;
 
 	}
 
@@ -451,6 +461,7 @@ public class MorganTreeman extends StateMachineGamer {
 		// TODO Auto-generated method stub
 		Sproot = null;
 		MProot = null;
+		timeBuffer = 2000;
 
 	}
 
@@ -560,6 +571,7 @@ public class MorganTreeman extends StateMachineGamer {
 	MaxNode MProot = null;
 	StateMachine machine;
 	StateMachine proverMachine;
+	int timeBuffer = 2000;
 //	SamplePropNetStateMachine propnet;
 
 
